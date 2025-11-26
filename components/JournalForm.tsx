@@ -113,11 +113,9 @@ interface JournalFormProps {
   onUpdateEntry: (entry: JournalEntry) => void;
   onCancelEdit: () => void;
   entryToEdit: JournalEntry | null;
-  isApiKeyReady: boolean;
-  onReconnectApiKey: () => void;
 }
 
-const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUpdateEntry, onCancelEdit, isApiKeyReady, onReconnectApiKey }) => {
+const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUpdateEntry, onCancelEdit }) => {
     const [date, setDate] = useState(new Date());
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [photos, setPhotos] = useState<PhotoEntry[]>([]);

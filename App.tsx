@@ -10,7 +10,7 @@ import SouvenirCardModal from './components/SouvenirCardModal';
 import ThemeToggle from './components/ThemeToggle';
 import { useTheme } from './contexts/ThemeContext';
 import PostPracticeFeedbackModal from './components/PostPracticeFeedbackModal';
-import ApiKeyModal from './components/ApiKeyModal';
+import DataManagementModal from './components/DataManagementModal';
 import { ALL_POSES } from './yogaPoses';
 
 // Helper to find pose from DB
@@ -127,6 +127,14 @@ const INITIAL_ENTRIES: JournalEntry[] = [
 
 const ENTRIES_STORAGE_KEY = 'yogaJournalEntries';
 
+const CogIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+
 const TabButton: React.FC<{
   label: string;
   isActive: boolean;
@@ -160,7 +168,7 @@ const App: React.FC = () => {
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [souvenirEntry, setSouvenirEntry] = useState<JournalEntry | null>(null);
   const [latestEntryForFeedback, setLatestEntryForFeedback] = useState<JournalEntry | null>(null);
-  const [isApiKeyReady, setIsApiKeyReady] = useState(false);
+  const [isDataModalOpen, setDataModalOpen] = useState(false);
 
   const { theme } = useTheme();
 
@@ -169,22 +177,6 @@ const App: React.FC = () => {
     ? { backgroundImage: 'radial-gradient(circle at top right, #e0f2f1 0%, #fafafa 50%)' }
     : { backgroundImage: 'radial-gradient(circle at top right, #0d3331 0%, #111827 50%)' }
   ), [theme]);
-
-  useEffect(() => {
-    const checkApiKey = async () => {
-        try {
-            // Check if window.aistudio exists to prevent crashing in local environments
-            if (window.aistudio && window.aistudio.hasSelectedApiKey) {
-                const hasKey = await window.aistudio.hasSelectedApiKey();
-                setIsApiKeyReady(hasKey);
-            }
-        } catch (error) {
-            console.error("Error checking for API key:", error);
-            setIsApiKeyReady(false);
-        }
-    };
-    checkApiKey();
-  }, []);
 
   useEffect(() => {
     try {
@@ -246,22 +238,19 @@ const App: React.FC = () => {
     });
   }, [entries, searchQuery]);
   
-  
-  const handleKeySelected = () => {
-    setIsApiKeyReady(true);
-  };
 
-  const handleReconnectApiKey = async () => {
-    try {
-        if (window.aistudio && window.aistudio.openSelectKey) {
-            await window.aistudio.openSelectKey();
-            handleKeySelected(); // Optimistically set the key as ready
-        } else {
-             console.warn("API Key selection not supported in this environment");
-        }
-    } catch (error) {
-        console.error("Error opening API key selection:", error);
-    }
+  const handleRestoreData = (restoredEntries: JournalEntry[]) => {
+      // Merge strategy: Filter out existing IDs from restored data, then append
+      const currentIds = new Set(entries.map(e => e.id));
+      const newEntries = restoredEntries.filter(e => !currentIds.has(e.id));
+      
+      if (newEntries.length === 0) {
+          alert("모든 데이터가 이미 존재합니다.");
+          return;
+      }
+      
+      const merged = [...entries, ...newEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setEntries(merged);
   };
 
 
@@ -270,10 +259,15 @@ const App: React.FC = () => {
       className="min-h-screen w-full bg-stone-50 dark:bg-slate-900 text-stone-800 dark:text-slate-200"
       style={backgroundStyle}
     >
-      {!isApiKeyReady && <ApiKeyModal onKeySelected={handleKeySelected} />}
-      
       <header className="text-center py-10 relative">
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex space-x-2">
+           <button
+            onClick={() => setDataModalOpen(true)}
+            className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
+            aria-label="데이터 관리"
+          >
+            <CogIcon />
+          </button>
           <ThemeToggle />
         </div>
         <h1 className="text-5xl font-extrabold text-teal-800 dark:text-teal-300 tracking-tight">Yoga Journal</h1>
@@ -287,8 +281,6 @@ const App: React.FC = () => {
             entryToEdit={editingEntry}
             onUpdateEntry={handleUpdateEntry}
             onCancelEdit={handleCancelEdit}
-            isApiKeyReady={isApiKeyReady}
-            onReconnectApiKey={handleReconnectApiKey}
         />
         
         <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
@@ -329,6 +321,14 @@ const App: React.FC = () => {
           allEntries={entries}
           onClose={() => setLatestEntryForFeedback(null)}
         />
+      )}
+
+      {isDataModalOpen && (
+          <DataManagementModal 
+            entries={entries}
+            onRestore={handleRestoreData}
+            onClose={() => setDataModalOpen(false)}
+          />
       )}
     </div>
   );
