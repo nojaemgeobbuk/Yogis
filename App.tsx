@@ -13,13 +13,14 @@ import { useTheme } from './contexts/ThemeContext';
 import PostPracticeFeedbackModal from './components/PostPracticeFeedbackModal';
 import DataManagementModal from './components/DataManagementModal';
 import { 
+  supabase, // Direct import
   addJournalEntry as dbAddJournalEntry, 
   getJournalEntries, 
   updateJournalEntry as dbUpdateJournalEntry, 
   deleteJournalEntry as dbDeleteJournalEntry,
   NewJournalEntry
 } from './services/supabaseService';
-import { onAuthStateChange, getCurrentUser, signOut } from './services/authService';
+import { signOut, signInWithGoogle, signInWithApple } from './services/authService';
 import Auth from './components/Auth';
 import { Session } from '@supabase/supabase-js';
 
@@ -79,13 +80,15 @@ const AppContent: React.FC = () => {
   ), [theme]);
 
   useEffect(() => {
-    const { data: authListener } = onAuthStateChange((_event, session) => {
+    // Directly use the Supabase client as documented.
+    // This removes any potential errors from the authService.ts wrapper.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setLoading(false);
+      setLoading(false); 
     });
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
   
@@ -175,7 +178,7 @@ const AppContent: React.FC = () => {
   if (loading) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
-            <p className="text-lg text-stone-600 dark:text-slate-400">Loading...</p>
+            <p className="text-lg text-stone-600 dark:text-slate-400">인증 상태를 확인하는 중...</p>
         </div>
     );
   }
@@ -186,7 +189,7 @@ const AppContent: React.FC = () => {
       style={backgroundStyle}
     >
       {!session ? (
-        <Auth />
+        <Auth onSignInWithGoogle={signInWithGoogle} onSignInWithApple={signInWithApple} />
       ) : (
         <>
           <header className="text-center py-10 relative">
@@ -194,7 +197,7 @@ const AppContent: React.FC = () => {
               <button
                 onClick={() => setDataModalOpen(true)}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-                aria-label="Data Management"
+                aria-label="데이터 관리"
               >
                 <CogIcon />
               </button>
@@ -202,13 +205,13 @@ const AppContent: React.FC = () => {
               <button
                 onClick={signOut}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-                aria-label="Sign Out"
+                aria-label="로그아웃"
               >
                 <LogoutIcon />
               </button>
             </div>
             <h1 className="text-5xl font-extrabold text-teal-800 dark:text-teal-300 tracking-tight">Yoga Journal</h1>
-            <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">A space for your practice and growth</p>
+            <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">나만의 수련과 성장을 위한 공간</p>
           </header>
 
           <main className="container mx-auto px-4">
@@ -221,9 +224,9 @@ const AppContent: React.FC = () => {
             
             <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
                 <div className="flex space-x-4 p-2 bg-stone-200/50 dark:bg-slate-800/50 rounded-full">
-                    <NavLink to="/" label="Journal" />
-                    <NavLink to="/library" label="Pose Library" />
-                    <NavLink to="/analytics" label="Monthly Analysis" />
+                    <NavLink to="/" label="일지" />
+                    <NavLink to="/library" label="자세 도서관" />
+                    <NavLink to="/analytics" label="월간 분석" />
                 </div>
             </div>
 
