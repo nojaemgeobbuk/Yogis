@@ -6,6 +6,7 @@ import YogaPoseCard from './YogaPoseCard';
 interface JournalCardProps {
   entry: JournalEntry;
   onEdit: (entry: JournalEntry) => void;
+  onDelete: (id: string) => void;
   onGenerateSouvenir: (entry: JournalEntry) => void;
   onToggleFavorite: (id: string) => void;
   isHovered?: boolean;
@@ -30,7 +31,7 @@ const StarIcon: React.FC<{ filled: boolean }> = ({ filled }) => (
 
 const EditIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002 2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
 );
 
@@ -52,9 +53,32 @@ const FavoriteStarIcon: React.FC<{ isFavorite: boolean }> = ({ isFavorite }) => 
     </svg>
 );
 
+const DeleteIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
 
-const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onGenerateSouvenir, onToggleFavorite, isHovered }) => {
+const linkify = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+        if (part.match(urlRegex)) {
+            return <a href={part} key={i} target="_blank" rel="noopener noreferrer" className="text-teal-500 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-500 underline">{part}</a>;
+        }
+        return part;
+    });
+};
+
+
+const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGenerateSouvenir, onToggleFavorite, isHovered }) => {
   const isBeforeAndAfter = entry.photos.length === 2 && entry.photos.some(p => p.theme === 'Before & After');
+
+  const handleDelete = () => {
+    if (window.confirm('이 일지를 삭제하시겠습니까? 되돌릴 수 없습니다.')) {
+        onDelete(entry.id);
+    }
+  }
 
   return (
     <div className={`w-full h-full rounded-lg overflow-hidden flex flex-col p-6 border bg-gradient-to-br from-stone-50 via-white to-stone-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 animated-gradient-bg transition-all duration-300 ease-in-out ${isHovered ? 'shadow-2xl border-teal-200 dark:border-teal-700 transform -translate-y-2' : 'shadow-lg border-stone-200 dark:border-slate-700'}`}>
@@ -85,6 +109,14 @@ const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onGenerateSouv
                 </button>
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded-md bg-slate-800 px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none dark:bg-slate-700">
                     일지 수정
+                </span>
+             </div>
+              <div className="relative group flex items-center">
+                <button onClick={handleDelete} className="text-stone-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors" aria-label="일지 삭제">
+                    <DeleteIcon />
+                </button>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded-md bg-slate-800 px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none dark:bg-slate-700">
+                    일지 삭제
                 </span>
              </div>
           </div>
@@ -131,7 +163,7 @@ const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onGenerateSouv
       <div className="flex-grow overflow-y-auto pr-2 flex flex-col">
         {entry.notes && (
           <div className="text-sm text-stone-700 dark:text-slate-300 mb-4 whitespace-pre-wrap leading-relaxed">
-            {entry.notes}
+            {linkify(entry.notes)}
           </div>
         )}
 

@@ -6,11 +6,12 @@ import JournalCard from './JournalCard';
 interface CardStackProps {
   entries: JournalEntry[];
   onEditEntry: (entry: JournalEntry) => void;
+  onDeleteEntry: (id: string) => void;
   onGenerateSouvenir: (entry: JournalEntry) => void;
   onToggleFavorite: (id: string) => void;
 }
 
-const CardStack: React.FC<CardStackProps> = ({ entries, onEditEntry, onGenerateSouvenir, onToggleFavorite }) => {
+const CardStack: React.FC<CardStackProps> = ({ entries, onEditEntry, onDeleteEntry, onGenerateSouvenir, onToggleFavorite }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (entries.length === 0) {
@@ -57,7 +58,14 @@ const CardStack: React.FC<CardStackProps> = ({ entries, onEditEntry, onGenerateS
               transition: 'transform 0.5s ease-in-out, z-index 0.5s',
             }}
           >
-            <JournalCard entry={entry} onEdit={onEditEntry} onGenerateSouvenir={onGenerateSouvenir} onToggleFavorite={onToggleFavorite} isHovered={isHovered} />
+            <JournalCard 
+                entry={entry} 
+                onEdit={onEditEntry} 
+                onDelete={onDeleteEntry}
+                onGenerateSouvenir={onGenerateSouvenir} 
+                onToggleFavorite={onToggleFavorite} 
+                isHovered={isHovered} 
+            />
           </div>
         );
       })}
