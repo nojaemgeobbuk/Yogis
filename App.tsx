@@ -79,16 +79,9 @@ const AppContent: React.FC = () => {
   ), [theme]);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const currentSession = await getCurrentUser();
-      setSession(currentSession);
-      setLoading(false);
-    };
-
-    fetchSession();
-
     const { data: authListener } = onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
     });
 
     return () => {
