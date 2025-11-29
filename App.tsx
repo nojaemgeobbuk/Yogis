@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import JournalForm from './components/JournalForm';
 import CardStack from './components/CardStack';
 import PoseBookshelf from './components/PoseBookshelf';
@@ -11,7 +12,6 @@ import ThemeToggle from './components/ThemeToggle';
 import { useTheme } from './contexts/ThemeContext';
 import PostPracticeFeedbackModal from './components/PostPracticeFeedbackModal';
 import DataManagementModal from './components/DataManagementModal';
-import { ALL_POSES } from './yogaPoses';
 import { addJournalEntry as dbAddJournalEntry, getJournalEntries, updateJournalEntry as dbUpdateJournalEntry, deleteJournalEntry as dbDeleteJournalEntry } from './services/supabaseService';
 import { onAuthStateChange, getCurrentUser, signOut } from './services/authService';
 import Auth from './components/Auth';
@@ -29,42 +29,26 @@ const LogoutIcon = () => (
   </svg>
 );
 
-
-const TabButton: React.FC<{
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}> = ({ label, isActive, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`px-6 py-2 rounded-full text-lg font-semibold transition-colors duration-300 ${
-      isActive
-        ? 'bg-teal-600 text-white shadow-md'
-        : 'bg-white/60 dark:bg-slate-700/60 text-stone-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-    }`}
-  >
-    {label}
-  </button>
-);
+const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  return (
+    <Link
+      to={to}
+      className={`px-6 py-2 rounded-full text-lg font-semibold transition-colors duration-300 ${
+        isActive
+          ? 'bg-teal-600 text-white shadow-md'
+          : 'bg-white/60 dark:bg-slate-700/60 text-stone-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+      }`}
+    >
+      {label}
+    </Link>
+  );
+};
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'journal' | 'library' | 'analytics'>('journal');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
-  const [souvenirEntry, setSouvenirEntry] = useState<JournalEntry | null>(null);
-  const [latestEntryForFeedback, setLatestEntryForFeedback] = useState<JournalEntry | null>(null);
-  const [isDataModalOpen, setDataModalOpen] = useState(false);
-
-  const { theme } = useTheme();
-
-  const backgroundStyle = useMemo(() => (
-    theme === 'light' 
-    ? { backgroundImage: 'radial-gradient(circle at top right, #e0f2f1 0%, #fafafa 50%)' }
-    : { backgroundImage: 'radial-gradient(circle at top right, #0d3331 0%, #111827 50%)' }
-  ), [theme]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -75,12 +59,51 @@ const App: React.FC = () => {
 
     checkUser();
 
-    const subscription = onAuthStateChange(setUser);
+    const { data: authListener } = onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => {
-      subscription?.unsubscribe();
+      authListener?.subscription.unsubscribe();
     };
   }, []);
+
+  if (loading) {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
+            <p className="text-lg text-stone-600 dark:text-slate-400">로딩 중...</p>
+        </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
+
+  return (
+    <Router>
+      <MainApp />
+    </Router>
+  );
+};
+
+const MainApp: React.FC = () => {
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
+  const [souvenirEntry, setSouvenirEntry] = useState<JournalEntry | null>(null);
+  const [latestEntryForFeedback, setLatestEntryForFeedback] = useState<JournalEntry | null>(null);
+  const [isDataModalOpen, setDataModalOpen] = useState(false);
+
+  const { theme } = useTheme();
+  const user = getCurrentUser();
+
+  const backgroundStyle = useMemo(() => (
+    theme === 'light' 
+    ? { backgroundImage: 'radial-gradient(circle at top right, #e0f2f1 0%, #fafafa 50%)' }
+    : { backgroundImage: 'radial-gradient(circle at top right, #0d3331 0%, #111827 50%)' }
+  ), [theme]);
 
   useEffect(() => {
     if (user) {
@@ -94,8 +117,9 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-
   const addJournalEntry = async (newEntry: Omit<JournalEntry, 'id'>) => {
+    const user = await getCurrentUser();
+    if (!user) return;
     const entryWithId = { ...newEntry, id: crypto.randomUUID(), user_id: user.id };
     await dbAddJournalEntry(entryWithId);
     setEntries(prevEntries => [entryWithId, ...prevEntries]);
@@ -135,7 +159,6 @@ const App: React.FC = () => {
     }
   };
 
-
   const filteredEntries = useMemo(() => {
     return entries.filter(entry => {
       const query = searchQuery.toLowerCase();
@@ -152,7 +175,6 @@ const App: React.FC = () => {
     });
   }, [entries, searchQuery]);
   
-
   const handleRestoreData = (restoredEntries: JournalEntry[]) => {
       const currentIds = new Set(entries.map(e => e.id));
       const newEntries = restoredEntries.filter(e => !currentIds.has(e.id));
@@ -164,22 +186,7 @@ const App: React.FC = () => {
 
       const merged = [...entries, ...newEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setEntries(merged);
-      
-      // Optionally, you could bulk-insert the newEntries to supabase here
   };
-
-  if (loading) {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
-            <p className="text-lg text-stone-600 dark:text-slate-400">로딩 중...</p>
-        </div>
-    );
-  }
-
-  if (!user) {
-    return <Auth />;
-  }
-
 
   return (
     <div 
@@ -209,7 +216,6 @@ const App: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-4">
-
         <JournalForm 
             onAddEntry={addJournalEntry}
             entryToEdit={editingEntry}
@@ -219,9 +225,9 @@ const App: React.FC = () => {
         
         <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
             <div className="flex space-x-4 p-2 bg-stone-200/50 dark:bg-slate-800/50 rounded-full">
-                <TabButton label="일지" isActive={activeView === 'journal'} onClick={() => setActiveView('journal')} />
-                <TabButton label="자세 도서관" isActive={activeView === 'library'} onClick={() => setActiveView('library')} />
-                <TabButton label="월간 분석" isActive={activeView === 'analytics'} onClick={() => setActiveView('analytics')} />
+                <NavLink to="/" label="일지" />
+                <NavLink to="/library" label="자세 도서관" />
+                <NavLink to="/analytics" label="월간 분석" />
             </div>
         </div>
 
@@ -229,25 +235,26 @@ const App: React.FC = () => {
             <div className="text-center p-8">
                 <p className="text-lg text-stone-600 dark:text-slate-400">일지를 불러오는 중...</p>
             </div>
-        ) : activeView === 'journal' ? (
-          <>
-            <div className="mb-8">
-              <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
-            </div>
-            <CardStack 
-                entries={filteredEntries} 
-                onEditEntry={handleStartEdit} 
-                onDeleteEntry={handleDeleteEntry}
-                onGenerateSouvenir={handleGenerateSouvenir} 
-                onToggleFavorite={handleToggleFavorite} 
-            />
-          </>
-        ) : activeView === 'library' ? (
-            <PoseBookshelf entries={filteredEntries} />
         ) : (
-            <AnalyticsView entries={entries} />
+          <Routes>
+            <Route path="/" element={
+              <>
+                <div className="mb-8">
+                  <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+                </div>
+                <CardStack 
+                    entries={filteredEntries} 
+                    onEditEntry={handleStartEdit} 
+                    onDeleteEntry={handleDeleteEntry}
+                    onGenerateSouvenir={handleGenerateSouvenir} 
+                    onToggleFavorite={handleToggleFavorite} 
+                />
+              </>
+            } />
+            <Route path="/library" element={<PoseBookshelf entries={filteredEntries} />} />
+            <Route path="/analytics" element={<AnalyticsView entries={entries} />} />
+          </Routes>
         )}
-
       </main>
 
        <footer className="text-center py-6 text-sm text-stone-500 dark:text-slate-500">
@@ -278,6 +285,6 @@ const App: React.FC = () => {
       )}
     </div>
   );
-};
+}
 
 export default App;
