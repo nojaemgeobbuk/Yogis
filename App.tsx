@@ -1,10 +1,10 @@
-
+햐
 import React, { useState, useEffect, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import JournalForm from './components/JournalForm';
 import CardStack from './components/CardStack';
 import PoseBookshelf from './components/PoseBookshelf';
-import type { JournalEntry, YogaPose } from './types';
+import type { JournalEntry } from './types';
 import SearchBar from './components/SearchBar';
 import AnalyticsView from './components/AnalyticsView';
 import SouvenirCardModal from './components/SouvenirCardModal';
@@ -15,6 +15,7 @@ import DataManagementModal from './components/DataManagementModal';
 import { addJournalEntry as dbAddJournalEntry, getJournalEntries, updateJournalEntry as dbUpdateJournalEntry, deleteJournalEntry as dbDeleteJournalEntry } from './services/supabaseService';
 import { onAuthStateChange, getCurrentUser, signOut } from './services/authService';
 import Auth from './components/Auth';
+import { Session } from '@supabase/supabase-js';
 
 const CogIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -47,57 +48,23 @@ const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
 };
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      setLoading(false);
-    };
-
-    checkUser();
-
-    const { data: authListener } = onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, []);
-
-  if (loading) {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
-            <p className="text-lg text-stone-600 dark:text-slate-400">로딩 중...</p>
-        </div>
-    );
-  }
-
-  if (!user) {
-    return <Auth />;
-  }
-
   return (
     <Router>
-      <MainApp />
+      <AppContent />
     </Router>
   );
 };
 
-const MainApp: React.FC = () => {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+const AppContent: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [souvenirEntry, setSouvenirEntry] = useState<JournalEntry | null>(null);
   const [latestEntryForFeedback, setLatestEntryForFeedback] = useState<JournalEntry | null>(null);
   const [isDataModalOpen, setDataModalOpen] = useState(false);
-
   const { theme } = useTheme();
-  const user = getCurrentUser();
 
   const backgroundStyle = useMemo(() => (
     theme === 'light' 
@@ -106,29 +73,48 @@ const MainApp: React.FC = () => {
   ), [theme]);
 
   useEffect(() => {
-    if (user) {
+    const fetchSession = async () => {
+      const currentSession = await getCurrentUser();
+      setSession(currentSession);
+      setLoading(false);
+    };
+
+    fetchSession();
+
+    const { data: authListener } = onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+  
+  useEffect(() => {
+    if (session?.user) {
         const fetchEntries = async () => {
-            setLoading(true);
             const fetchedEntries = await getJournalEntries();
             setEntries(fetchedEntries || []);
-            setLoading(false);
         };
         fetchEntries();
     }
-  }, [user]);
+  }, [session]);
 
   const addJournalEntry = async (newEntry: Omit<JournalEntry, 'id'>) => {
-    const user = await getCurrentUser();
-    if (!user) return;
-    const entryWithId = { ...newEntry, id: crypto.randomUUID(), user_id: user.id };
-    await dbAddJournalEntry(entryWithId);
-    setEntries(prevEntries => [entryWithId, ...prevEntries]);
-    setLatestEntryForFeedback(entryWithId);
+    if (!session?.user) return;
+    const entryWithUserId = { ...newEntry, user_id: session.user.id };
+    const newlyAddedEntry = await dbAddJournalEntry(entryWithUserId);
+    if(newlyAddedEntry) {
+      setEntries(prevEntries => [newlyAddedEntry, ...prevEntries]);
+      setLatestEntryForFeedback(newlyAddedEntry);
+    }
   };
 
   const handleUpdateEntry = async (updatedEntry: JournalEntry) => {
-    await dbUpdateJournalEntry(updatedEntry);
-    setEntries(entries.map(e => e.id === updatedEntry.id ? updatedEntry : e));
+    const returnedEntry = await dbUpdateJournalEntry(updatedEntry);
+    if(returnedEntry){
+        setEntries(entries.map(e => e.id === returnedEntry.id ? returnedEntry : e));
+    }
     setEditingEntry(null);
   };
   
@@ -154,24 +140,20 @@ const MainApp: React.FC = () => {
     const entry = entries.find(e => e.id === id);
     if (entry) {
         const updatedEntry = { ...entry, isFavorite: !entry.isFavorite };
-        await dbUpdateJournalEntry(updatedEntry);
-        setEntries(entries.map(e => e.id === id ? updatedEntry : e));
+        await handleUpdateEntry(updatedEntry);
     }
   };
 
   const filteredEntries = useMemo(() => {
     return entries.filter(entry => {
       const query = searchQuery.toLowerCase();
-
-      const searchMatch = !query ||
+      return !query ||
         entry.notes.toLowerCase().includes(query) ||
         (entry.hashtags && entry.hashtags.some(tag => tag.toLowerCase().includes(query))) ||
-        (entry.poses && entry.poses.some(pose => 
+        (entry.poses && Array.isArray(entry.poses) && entry.poses.some(pose => 
           pose.name.toLowerCase().includes(query) || 
           pose.sanskritName.toLowerCase().includes(query)
         ));
-      
-      return searchMatch;
     });
   }, [entries, searchQuery]);
   
@@ -188,100 +170,90 @@ const MainApp: React.FC = () => {
       setEntries(merged);
   };
 
+  if (loading) {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
+            <p className="text-lg text-stone-600 dark:text-slate-400">로딩 중...</p>
+        </div>
+    );
+  }
+
   return (
     <div 
       className="min-h-screen w-full bg-stone-50 dark:bg-slate-900 text-stone-800 dark:text-slate-200"
       style={backgroundStyle}
     >
-      <header className="text-center py-10 relative">
-        <div className="absolute top-4 right-4 z-10 flex space-x-2">
-           <button
-            onClick={() => setDataModalOpen(true)}
-            className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-            aria-label="데이터 관리"
-          >
-            <CogIcon />
-          </button>
-          <ThemeToggle />
-           <button
-            onClick={signOut}
-            className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-            aria-label="로그아웃"
-          >
-            <LogoutIcon />
-          </button>
-        </div>
-        <h1 className="text-5xl font-extrabold text-teal-800 dark:text-teal-300 tracking-tight">Yoga Journal</h1>
-        <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">나만의 수련과 성장을 위한 공간</p>
-      </header>
-
-      <main className="container mx-auto px-4">
-        <JournalForm 
-            onAddEntry={addJournalEntry}
-            entryToEdit={editingEntry}
-            onUpdateEntry={handleUpdateEntry}
-            onCancelEdit={handleCancelEdit}
-        />
-        
-        <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
-            <div className="flex space-x-4 p-2 bg-stone-200/50 dark:bg-slate-800/50 rounded-full">
-                <NavLink to="/" label="일지" />
-                <NavLink to="/library" label="자세 도서관" />
-                <NavLink to="/analytics" label="월간 분석" />
+      {!session ? (
+        <Auth />
+      ) : (
+        <>
+          <header className="text-center py-10 relative">
+            <div className="absolute top-4 right-4 z-10 flex space-x-2">
+              <button
+                onClick={() => setDataModalOpen(true)}
+                className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
+                aria-label="데이터 관리"
+              >
+                <CogIcon />
+              </button>
+              <ThemeToggle />
+              <button
+                onClick={signOut}
+                className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
+                aria-label="로그아웃"
+              >
+                <LogoutIcon />
+              </button>
             </div>
-        </div>
+            <h1 className="text-5xl font-extrabold text-teal-800 dark:text-teal-300 tracking-tight">Yoga Journal</h1>
+            <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">나만의 수련과 성장을 위한 공간</p>
+          </header>
 
-        {loading ? (
-            <div className="text-center p-8">
-                <p className="text-lg text-stone-600 dark:text-slate-400">일지를 불러오는 중...</p>
-            </div>
-        ) : (
-          <Routes>
-            <Route path="/" element={
-              <>
-                <div className="mb-8">
-                  <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+          <main className="container mx-auto px-4">
+            <JournalForm 
+                onAddEntry={addJournalEntry}
+                entryToEdit={editingEntry}
+                onUpdateEntry={handleUpdateEntry}
+                onCancelEdit={handleCancelEdit}
+            />
+            
+            <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
+                <div className="flex space-x-4 p-2 bg-stone-200/50 dark:bg-slate-800/50 rounded-full">
+                    <NavLink to="/" label="일지" />
+                    <NavLink to="/library" label="자세 도서관" />
+                    <NavLink to="/analytics" label="월간 분석" />
                 </div>
-                <CardStack 
-                    entries={filteredEntries} 
-                    onEditEntry={handleStartEdit} 
-                    onDeleteEntry={handleDeleteEntry}
-                    onGenerateSouvenir={handleGenerateSouvenir} 
-                    onToggleFavorite={handleToggleFavorite} 
-                />
-              </>
-            } />
-            <Route path="/library" element={<PoseBookshelf entries={filteredEntries} />} />
-            <Route path="/analytics" element={<AnalyticsView entries={entries} />} />
-          </Routes>
-        )}
-      </main>
+            </div>
 
-       <footer className="text-center py-6 text-sm text-stone-500 dark:text-slate-500">
-        <p>Created with passion for mindfulness and technology.</p>
-      </footer>
+            <Routes>
+              <Route path="/" element={
+                <>
+                  <div className="mb-8">
+                    <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+                  </div>
+                  <CardStack 
+                      entries={filteredEntries} 
+                      onEditEntry={handleStartEdit} 
+                      onDeleteEntry={handleDeleteEntry}
+                      onGenerateSouvenir={handleGenerateSouvenir} 
+                      onToggleFavorite={handleToggleFavorite} 
+                  />
+                </>
+              } />
+              <Route path="/library" element={<PoseBookshelf entries={filteredEntries} />} />
+              <Route path="/analytics" element={<AnalyticsView entries={entries} />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
 
-      {souvenirEntry && (
-        <SouvenirCardModal 
-          entry={souvenirEntry} 
-          onClose={() => setSouvenirEntry(null)}
-        />
-      )}
+          <footer className="text-center py-6 text-sm text-stone-500 dark:text-slate-500">
+            <p>Created with passion for mindfulness and technology.</p>
+          </footer>
 
-      {latestEntryForFeedback && (
-        <PostPracticeFeedbackModal 
-          entry={latestEntryForFeedback}
-          allEntries={entries}
-          onClose={() => setLatestEntryForFeedback(null)}
-        />
-      )}
-
-      {isDataModalOpen && (
-          <DataManagementModal 
-            entries={entries}
-            onRestore={handleRestoreData}
-            onClose={() => setDataModalOpen(false)}
-          />
+          {souvenirEntry && <SouvenirCardModal entry={souvenirEntry} onClose={() => setSouvenirEntry(null)} />}
+          {latestEntryForFeedback && <PostPracticeFeedbackModal entry={latestEntryForFeedback} allEntries={entries} onClose={() => setLatestEntryForFeedback(null)} />}
+          {isDataModalOpen && <DataManagementModal entries={entries} onRestore={handleRestoreData} onClose={() => setDataModalOpen(false)} />}
+        </>
       )}
     </div>
   );
