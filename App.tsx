@@ -1,4 +1,4 @@
-햐
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import JournalForm from './components/JournalForm';
@@ -12,7 +12,13 @@ import ThemeToggle from './components/ThemeToggle';
 import { useTheme } from './contexts/ThemeContext';
 import PostPracticeFeedbackModal from './components/PostPracticeFeedbackModal';
 import DataManagementModal from './components/DataManagementModal';
-import { addJournalEntry as dbAddJournalEntry, getJournalEntries, updateJournalEntry as dbUpdateJournalEntry, deleteJournalEntry as dbDeleteJournalEntry } from './services/supabaseService';
+import { 
+  addJournalEntry as dbAddJournalEntry, 
+  getJournalEntries, 
+  updateJournalEntry as dbUpdateJournalEntry, 
+  deleteJournalEntry as dbDeleteJournalEntry,
+  NewJournalEntry
+} from './services/supabaseService';
 import { onAuthStateChange, getCurrentUser, signOut } from './services/authService';
 import Auth from './components/Auth';
 import { Session } from '@supabase/supabase-js';
@@ -97,22 +103,26 @@ const AppContent: React.FC = () => {
             setEntries(fetchedEntries || []);
         };
         fetchEntries();
+    } else {
+      setEntries([]);
     }
   }, [session]);
 
-  const addJournalEntry = async (newEntry: Omit<JournalEntry, 'id'>) => {
+  const addJournalEntry = async (entry: Omit<NewJournalEntry, 'user_id'>) => {
     if (!session?.user) return;
-    const entryWithUserId = { ...newEntry, user_id: session.user.id };
-    const newlyAddedEntry = await dbAddJournalEntry(entryWithUserId);
-    if(newlyAddedEntry) {
+    
+    const newEntry: NewJournalEntry = { ...entry, user_id: session.user.id };
+    const newlyAddedEntry = await dbAddJournalEntry(newEntry);
+
+    if (newlyAddedEntry) {
       setEntries(prevEntries => [newlyAddedEntry, ...prevEntries]);
       setLatestEntryForFeedback(newlyAddedEntry);
     }
   };
 
-  const handleUpdateEntry = async (updatedEntry: JournalEntry) => {
+  const handleUpdateEntry = async (updatedEntry: Partial<JournalEntry> & { id: string }) => {
     const returnedEntry = await dbUpdateJournalEntry(updatedEntry);
-    if(returnedEntry){
+    if (returnedEntry) {
         setEntries(entries.map(e => e.id === returnedEntry.id ? returnedEntry : e));
     }
     setEditingEntry(null);
@@ -136,11 +146,10 @@ const AppContent: React.FC = () => {
     setSouvenirEntry(entry);
   };
   
-  const handleToggleFavorite = async (id: string) => {
+  const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
     const entry = entries.find(e => e.id === id);
     if (entry) {
-        const updatedEntry = { ...entry, isFavorite: !entry.isFavorite };
-        await handleUpdateEntry(updatedEntry);
+        await handleUpdateEntry({ id, isFavorite: !isFavorite });
     }
   };
 
@@ -162,7 +171,7 @@ const AppContent: React.FC = () => {
       const newEntries = restoredEntries.filter(e => !currentIds.has(e.id));
       
       if (newEntries.length === 0) {
-          alert("모든 데이터가 이미 존재합니다.");
+          alert("All data already exists.");
           return;
       }
 
@@ -173,7 +182,7 @@ const AppContent: React.FC = () => {
   if (loading) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
-            <p className="text-lg text-stone-600 dark:text-slate-400">로딩 중...</p>
+            <p className="text-lg text-stone-600 dark:text-slate-400">Loading...</p>
         </div>
     );
   }
@@ -192,7 +201,7 @@ const AppContent: React.FC = () => {
               <button
                 onClick={() => setDataModalOpen(true)}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-                aria-label="데이터 관리"
+                aria-label="Data Management"
               >
                 <CogIcon />
               </button>
@@ -200,13 +209,13 @@ const AppContent: React.FC = () => {
               <button
                 onClick={signOut}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-                aria-label="로그아웃"
+                aria-label="Sign Out"
               >
                 <LogoutIcon />
               </button>
             </div>
             <h1 className="text-5xl font-extrabold text-teal-800 dark:text-teal-300 tracking-tight">Yoga Journal</h1>
-            <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">나만의 수련과 성장을 위한 공간</p>
+            <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">A space for your practice and growth</p>
           </header>
 
           <main className="container mx-auto px-4">
@@ -219,9 +228,9 @@ const AppContent: React.FC = () => {
             
             <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
                 <div className="flex space-x-4 p-2 bg-stone-200/50 dark:bg-slate-800/50 rounded-full">
-                    <NavLink to="/" label="일지" />
-                    <NavLink to="/library" label="자세 도서관" />
-                    <NavLink to="/analytics" label="월간 분석" />
+                    <NavLink to="/" label="Journal" />
+                    <NavLink to="/library" label="Pose Library" />
+                    <NavLink to="/analytics" label="Monthly Analysis" />
                 </div>
             </div>
 
@@ -240,7 +249,7 @@ const AppContent: React.FC = () => {
                   />
                 </>
               } />
-              <Route path="/library" element={<PoseBookshelf entries={filteredEntries} />} />
+              <Route path="/library" element={<PoseBookshelf entries={entries} />} />
               <Route path="/analytics" element={<AnalyticsView entries={entries} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

@@ -1,17 +1,23 @@
 
 import { createClient } from '@supabase/supabase-js';
-import type { JournalEntry, Pose } from '../types';
+import type { JournalEntry } from '../types';
 
-// Replace with your Supabase URL and Anon Key
+// These should be in environment variables, but for now this is fine.
 const supabaseUrl = 'https://vjmnjyuzcrflojvktlyj.supabase.co';
 const supabaseAnonKey = 'sb_publishable_GaV2xujMkhDq1TmhCnbPzg_nWDHbIfH';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const addJournalEntry = async (entry: JournalEntry) => {
+// This type is for data passed to add a new entry.
+export type NewJournalEntry = Omit<JournalEntry, 'id'>;
+
+export const addJournalEntry = async (entry: NewJournalEntry): Promise<JournalEntry | null> => {
   const { data, error } = await supabase
     .from('journal_entries')
-    .insert([entry]);
+    .insert(entry)
+    .select()
+    .single(); // Use .single() to get a single object back, not an array
+
   if (error) {
     console.error('Error adding journal entry:', error);
     return null;
@@ -19,10 +25,12 @@ export const addJournalEntry = async (entry: JournalEntry) => {
   return data;
 };
 
-export const getJournalEntries = async () => {
+export const getJournalEntries = async (): Promise<JournalEntry[]> => {
   const { data, error } = await supabase
     .from('journal_entries')
-    .select('*');
+    .select('*')
+    .order('date', { ascending: false }); // Order entries by date, newest first
+
   if (error) {
     console.error('Error fetching journal entries:', error);
     return [];
@@ -30,11 +38,15 @@ export const getJournalEntries = async () => {
   return data;
 };
 
-export const updateJournalEntry = async (entry: JournalEntry) => {
+export const updateJournalEntry = async (entry: Partial<JournalEntry> & { id: string }): Promise<JournalEntry | null> => {
+  const { id, ...updateData } = entry;
   const { data, error } = await supabase
     .from('journal_entries')
-    .update(entry)
-    .eq('id', entry.id);
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
   if (error) {
     console.error('Error updating journal entry:', error);
     return null;
@@ -42,11 +54,14 @@ export const updateJournalEntry = async (entry: JournalEntry) => {
   return data;
 };
 
-export const deleteJournalEntry = async (id: string) => {
+export const deleteJournalEntry = async (id: string): Promise<JournalEntry | null> => {
   const { data, error } = await supabase
     .from('journal_entries')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .select()
+    .single();
+
   if (error) {
     console.error('Error deleting journal entry:', error);
     return null;
