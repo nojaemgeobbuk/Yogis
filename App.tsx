@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+// [변경] BrowserRouter as Router 삭제함 (여기선 라우터 기능만 사용)
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import JournalForm from './components/JournalForm';
 import CardStack from './components/CardStack';
 import PoseBookshelf from './components/PoseBookshelf';
@@ -13,7 +13,7 @@ import { useTheme } from './contexts/ThemeContext';
 import PostPracticeFeedbackModal from './components/PostPracticeFeedbackModal';
 import DataManagementModal from './components/DataManagementModal';
 import { 
-  supabase, // Direct import
+  supabase, 
   addJournalEntry as dbAddJournalEntry, 
   getJournalEntries, 
   updateJournalEntry as dbUpdateJournalEntry, 
@@ -24,6 +24,7 @@ import { signOut, signInWithGoogle, signInWithApple } from './services/authServi
 import Auth from './components/Auth';
 import { Session } from '@supabase/supabase-js';
 
+// ... (아이콘 컴포넌트들은 그대로 유지) ...
 const CogIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -46,7 +47,7 @@ const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
       className={`px-6 py-2 rounded-full text-lg font-semibold transition-colors duration-300 ${
         isActive
           ? 'bg-teal-600 text-white shadow-md'
-          : 'bg-white/60 dark:bg-slate-700/60 text-stone-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+          : 'text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700'
       }`}
     >
       {label}
@@ -54,15 +55,9 @@ const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
   );
 };
 
+// [변경] 기존의 App 컴포넌트(Router 감싸던 껍데기)를 삭제하고
+// AppContent를 App으로 이름을 바꿔서 바로 내보냅니다.
 const App: React.FC = () => {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
-  );
-};
-
-const AppContent: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -73,15 +68,7 @@ const AppContent: React.FC = () => {
   const [isDataModalOpen, setDataModalOpen] = useState(false);
   const { theme } = useTheme();
 
-  const backgroundStyle = useMemo(() => (
-    theme === 'light' 
-    ? { backgroundImage: 'radial-gradient(circle at top right, #e0f2f1 0%, #fafafa 50%)' }
-    : { backgroundImage: 'radial-gradient(circle at top right, #0d3331 0%, #111827 50%)' }
-  ), [theme]);
-
   useEffect(() => {
-    // Directly use the Supabase client as documented.
-    // This removes any potential errors from the authService.ts wrapper.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false); 
@@ -177,17 +164,14 @@ const AppContent: React.FC = () => {
 
   if (loading) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-slate-900">
+        <div className="min-h-screen flex items-center justify-center bg-stone-100 dark:bg-slate-900">
             <p className="text-lg text-stone-600 dark:text-slate-400">인증 상태를 확인하는 중...</p>
         </div>
     );
   }
 
   return (
-    <div 
-      className="min-h-screen w-full bg-stone-50 dark:bg-slate-900 text-stone-800 dark:text-slate-200"
-      style={backgroundStyle}
-    >
+    <div className="min-h-screen w-full bg-stone-100 dark:bg-slate-900 text-stone-800 dark:text-slate-200">
       {!session ? (
         <Auth onSignInWithGoogle={signInWithGoogle} onSignInWithApple={signInWithApple} />
       ) : (
@@ -222,8 +206,8 @@ const AppContent: React.FC = () => {
                 onCancelEdit={handleCancelEdit}
             />
             
-            <div className="my-8 border-b border-stone-200 dark:border-slate-800 pb-4 flex justify-center">
-                <div className="flex space-x-4 p-2 bg-stone-200/50 dark:bg-slate-800/50 rounded-full">
+            <div className="my-8 border-b border-stone-300 dark:border-slate-700 pb-4 flex justify-center">
+                <div className="flex space-x-4 p-2 bg-stone-200 dark:bg-slate-800 rounded-full">
                     <NavLink to="/" label="일지" />
                     <NavLink to="/library" label="자세 도서관" />
                     <NavLink to="/analytics" label="월간 분석" />
