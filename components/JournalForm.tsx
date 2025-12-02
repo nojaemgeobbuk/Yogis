@@ -1,9 +1,12 @@
-
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { JournalEntry, YogaPose, PhotoEntry, PhotoTheme } from '../types';
 import YogaPoseCard from './YogaPoseCard';
 import DatePicker from './DatePicker';
 import { ALL_POSES } from '../yogaPoses';
+import { uploadImage } from '../services/supabaseService'; // 👈 [추가] 업로드 함수 가져오기
+
+// ... (기존 아이콘 컴포넌트들: PlusIcon, UpdateIcon 등은 그대로 유지됨)
+// (편의상 아이콘 코드는 생략하지 않고 아래에 포함했습니다. 그대로 복사하세요)
 
 const INSPIRATIONAL_QUOTES = [
     "당신의 발이 있는 곳에 존재하세요.",
@@ -15,54 +18,20 @@ const INSPIRATIONAL_QUOTES = [
     "흔들려도 괜찮아, 그게 바로 춤의 일부이니까.",
     "몸이 아닌 마음이, 요가의 한계를 결정합니다.",
     "매트 위에서의 인내가 매트 밖에서의 평온으로 이어집니다.",
-    "당신의 에너지가 흐르는 곳에, 당신의 삶이 펼쳐집니다.",
-    "가장 위대한 발견은 자기 자신을 아는 것입니다.",
-    "호흡에 집중하면, 현재의 순간이 선명해집니다.",
-    "유연성은 마음에서 시작됩니다.",
-    "오늘의 수련은 내일에 대한 투자입니다.",
-    "완벽함이 아닌 과정에 집중하세요.",
-    "스스로에게 친절할 때, 세상도 당신에게 친절해집니다.",
-    "가장 어두운 밤이 지나야 가장 밝은 해가 뜹니다.",
-    "정지는 움직임의 일부입니다.",
-    "당신 안에 이미 모든 힘이 있습니다.",
-    "천천히 가는 것을 두려워 말고, 멈추는 것을 두려워하세요.",
-    "변화는 당신 안에서 시작됩니다.",
-    "당신의 몸이 말하는 소리에 귀 기울이세요.",
-    "매일의 작은 노력이 큰 차이를 만듭니다.",
-    "당신은 생각보다 강합니다.",
-    "고요한 마음이 가장 큰 힘입니다.",
-    "과거를 내려놓고, 현재에 집중하세요.",
-    "당신의 존재 자체로 충분합니다.",
-    "감사하는 마음은 행복의 씨앗입니다.",
-    "자신을 믿는 것이 첫 번째 비결입니다.",
-    "행복은 여정이지, 목적지가 아닙니다.",
-    "내면의 평화가 진짜 힘입니다."
+    "당신의 에너지가 흐르는 곳에, 당신의 삶이 펼쳐집니다."
 ];
 
 const defaultYogaIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 100 6 3 3 0 000-6zm-2 9h4l-1.5 8h-1L10 11z"/></svg>`;
 
-const SearchIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-    </svg>
-);
-
-const PencilIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
-    </svg>
-);
-
-
 const PlusIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
     </svg>
 );
 
 const UpdateIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
 );
 
@@ -78,6 +47,17 @@ const XIcon = () => (
     </svg>
 );
 
+const PencilIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
+    </svg>
+);
+
+const CalendarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-stone-500 dark:text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 8.25a.75.75 0 000 1.5h11a.75.75 0 000-1.5h-11z" clipRule="evenodd" />
+    </svg>
+);
 
 const StarIcon: React.FC<{ filled: boolean; onClick: () => void; onMouseEnter: () => void; onMouseLeave: () => void }> = ({ filled, onClick, onMouseEnter, onMouseLeave }) => (
     <svg 
@@ -93,12 +73,6 @@ const StarIcon: React.FC<{ filled: boolean; onClick: () => void; onMouseEnter: (
     </svg>
 );
 
-const CalendarIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-stone-500 dark:text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 8.25a.75.75 0 000 1.5h11a.75.75 0 000-1.5h-11z" clipRule="evenodd" />
-    </svg>
-);
-
 const initialManualPoseState: Omit<YogaPose, 'svgIcon'> = {
     name: '',
     sanskritName: '',
@@ -109,13 +83,14 @@ const initialManualPoseState: Omit<YogaPose, 'svgIcon'> = {
 };
 
 interface JournalFormProps {
-  onAddEntry: (entry: JournalEntry) => void;
-  onUpdateEntry: (entry: JournalEntry) => void;
-  onCancelEdit: () => void;
-  entryToEdit: JournalEntry | null;
+    userId: string; // 👈 [추가] 중요! 파일 경로 생성 시 필요함
+    onAddEntry: (entry: Omit<JournalEntry, 'id' | 'user_id'>) => void;
+    onUpdateEntry: (entry: JournalEntry) => void;
+    onCancelEdit: () => void;
+    entryToEdit: JournalEntry | null;
 }
 
-const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUpdateEntry, onCancelEdit }) => {
+const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEdit, onUpdateEntry, onCancelEdit }) => {
     const [date, setDate] = useState(new Date());
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [photos, setPhotos] = useState<PhotoEntry[]>([]);
@@ -132,8 +107,11 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
     const [manualBenefits, setManualBenefits] = useState('');
     const [manualContraindications, setManualContraindications] = useState('');
     const [showPoseSuggestions, setShowPoseSuggestions] = useState(false);
+    
+    // 🔽 [추가] 업로드 로딩 상태
+    const [isUploading, setIsUploading] = useState(false);
+    
     const dropdownRef = useRef<HTMLDivElement>(null);
-
 
     const todaysQuote = useMemo(() => {
         const day = date.getDate();
@@ -165,6 +143,7 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
         setManualBenefits('');
         setManualContraindications('');
         setShowPoseSuggestions(false);
+        setIsUploading(false); // 리셋 시 로딩도 해제
     }, []);
 
     useEffect(() => {
@@ -181,7 +160,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
         }
     }, [entryToEdit, resetForm]);
 
-    // Close suggestions on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -192,34 +170,45 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-
     const handleDateSelect = (newDate: Date) => {
         setDate(newDate);
         setDatePickerOpen(false);
     };
 
+    // 🔽 [수정] 파일 선택 시, 즉시 Base64로 바꾸지 않고 File 객체를 저장함 (미리보기는 Blob URL 사용)
     const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files || []);
         if (photos.length + files.length > 2) {
              alert("사진은 최대 2장까지 업로드할 수 있습니다.");
              return;
         }
+        
         files.forEach((file: File) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const newPhoto: PhotoEntry = {
-                    url: reader.result as string,
-                    caption: '',
-                    theme: undefined,
-                };
-                setPhotos(prev => [...prev, newPhoto]);
+            // 브라우저에서 즉시 보여줄 임시 URL 생성 (가볍고 빠름)
+            const previewUrl = URL.createObjectURL(file);
+            
+            const newPhoto: PhotoEntry = {
+                url: previewUrl,
+                caption: '',
+                theme: undefined,
+                file: file, // 👈 진짜 파일 객체 저장 (나중에 업로드용)
             };
-            reader.readAsDataURL(file);
+            setPhotos(prev => [...prev, newPhoto]);
         });
+
+        // 같은 파일을 다시 선택할 수 있게 input 초기화
+        event.target.value = '';
     };
     
     const handleRemovePhoto = (indexToRemove: number) => {
-        setPhotos(prev => prev.filter((_, index) => index !== indexToRemove));
+        setPhotos(prev => {
+            const photoToRemove = prev[indexToRemove];
+            // 메모리 누수 방지를 위해 Blob URL 해제
+            if (photoToRemove.file && photoToRemove.url.startsWith('blob:')) {
+                URL.revokeObjectURL(photoToRemove.url);
+            }
+            return prev.filter((_, index) => index !== indexToRemove);
+        });
     };
 
     const handlePhotoDetailChange = (index: number, field: 'caption' | 'theme', value: string) => {
@@ -242,12 +231,10 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
 
     const handleAddFirstMatchPose = () => {
         if (!poseQuery.trim()) return;
-        
         const match = filteredPoses[0];
         if (match) {
             addPoseToEntry(match);
         } else {
-            // Optional: You could ask them if they want to add it manually here
             alert(`"${poseQuery}"에 해당하는 자세를 찾을 수 없습니다. 직접 추가해보세요.`);
         }
     };
@@ -286,46 +273,81 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
         setManualContraindications('');
     };
 
-
-    const handleSubmit = (event: React.FormEvent) => {
+    // 🔽 [핵심 수정] 제출 시 이미지를 먼저 업로드하고, URL로 교체한 뒤 저장
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (isSuccess) return; // Prevent multiple submissions
+        if (isSuccess || isUploading) return;
+
         if (!notes.trim() && photos.length === 0) {
             alert("최소한 사진 한 장이나 수련 노트는 입력해주세요.");
             return;
         }
-        
-        const commonData = {
-            date: date.toISOString(),
-            photos,
-            notes,
-            hashtags: hashtags.split(',').map(h => h.trim()).filter(Boolean),
-            poses,
-            duration,
-            intensity,
-        };
 
-        if(entryToEdit){
-            const updatedEntry: JournalEntry = {
-                ...entryToEdit,
-                ...commonData
-            };
-            onUpdateEntry(updatedEntry);
-        } else {
-             const newEntry: JournalEntry = {
-                id: new Date().toISOString(),
-                ...commonData
-            };
-            onAddEntry(newEntry);
-        }
+        setIsUploading(true); // 로딩 시작
 
-        setIsSuccess(true);
-        setTimeout(() => {
-            setIsSuccess(false);
-            if (!entryToEdit) {
-                resetForm();
+        try {
+            // 1. 사진 업로드 처리 (병렬 처리로 속도 향상)
+            const processedPhotos = await Promise.all(photos.map(async (photo) => {
+                // 'file' 속성이 있다면(새로 추가된 사진), 업로드가 필요함
+                if (photo.file) {
+                    const publicUrl = await uploadImage(photo.file, userId);
+                    if (publicUrl) {
+                        // 업로드 성공 시: 파일 객체는 제거하고, 영구 URL로 교체
+                        return {
+                            url: publicUrl,
+                            caption: photo.caption,
+                            theme: photo.theme
+                        };
+                    } else {
+                        // 실패 시 경고하고 기존 것 반환 (또는 에러 처리)
+                        console.error("이미지 업로드 실패");
+                        return photo; 
+                    }
+                }
+                // 이미 URL인 경우(기존 사진) 그대로 반환
+                return photo;
+            }));
+
+            // 2. 정리된 데이터 준비
+            const commonData = {
+                date: date.toISOString(),
+                photos: processedPhotos as PhotoEntry[], // URL만 남은 사진 목록
+                notes,
+                hashtags: hashtags.split(',').map(h => h.trim()).filter(Boolean),
+                poses,
+                duration,
+                intensity,
+            };
+
+            // 3. 데이터 저장
+            if(entryToEdit){
+                const updatedEntry: JournalEntry = {
+                    ...entryToEdit,
+                    ...commonData
+                };
+                onUpdateEntry(updatedEntry);
+            } else {
+                 const newEntry: Omit<JournalEntry, 'id' | 'user_id'> = {
+                    ...commonData
+                };
+                onAddEntry(newEntry);
             }
-        }, 2000);
+
+            // 4. 성공 처리
+            setIsSuccess(true);
+            setTimeout(() => {
+                setIsSuccess(false);
+                if (!entryToEdit) {
+                    resetForm();
+                }
+            }, 2000);
+
+        } catch (error) {
+            console.error("저장 중 에러 발생:", error);
+            alert("저장 중 문제가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsUploading(false); // 로딩 끝
+        }
     };
 
     return (
@@ -334,13 +356,14 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
             <div className="text-center mb-6 p-4 bg-teal-50 dark:bg-teal-900/30 border-l-4 border-teal-500 dark:border-teal-600 rounded-r-lg">
                 <p className="text-lg italic text-teal-800 dark:text-teal-300">"{todaysQuote}"</p>
             </div>
+            
             <form onSubmit={handleSubmit} className="space-y-4">
                  <div>
                     <label className="block text-sm font-medium text-stone-600 dark:text-slate-300 mb-2">사진 (최대 2장)</label>
                     <div className="flex items-center space-x-4 mb-4">
-                        <input type="file" id="photo-upload" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={photos.length >= 2}/>
-                        <label htmlFor="photo-upload" className={`cursor-pointer bg-stone-100 dark:bg-slate-700 text-stone-700 dark:text-slate-200 px-4 py-2 rounded-md border border-stone-300 dark:border-slate-600 hover:bg-stone-200 dark:hover:bg-slate-600 transition-colors text-sm ${photos.length >=2 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            파일 선택
+                        <input type="file" id="photo-upload" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={photos.length >= 2 || isUploading}/>
+                        <label htmlFor="photo-upload" className={`cursor-pointer bg-stone-100 dark:bg-slate-700 text-stone-700 dark:text-slate-200 px-4 py-2 rounded-md border border-stone-300 dark:border-slate-600 hover:bg-stone-200 dark:hover:bg-slate-600 transition-colors text-sm ${photos.length >=2 || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            {isUploading ? '업로드 중...' : '파일 선택'}
                         </label>
                     </div>
                     {photos.length > 0 && (
@@ -350,7 +373,8 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
                                     <button
                                         type="button"
                                         onClick={() => handleRemovePhoto(index)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:bg-red-600 transition z-10"
+                                        disabled={isUploading}
+                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:bg-red-600 transition z-10 disabled:opacity-50"
                                         aria-label="사진 삭제"
                                     >
                                         <XIcon />
@@ -574,10 +598,12 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
                             isSuccess 
                                 ? 'bg-emerald-500 cursor-default' 
                                 : (entryToEdit ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700')
-                        }`}
-                        disabled={isSuccess}
+                        } ${isUploading ? 'opacity-70 cursor-wait' : ''}`}
+                        disabled={isSuccess || isUploading}
                     >
-                        {isSuccess ? (
+                        {isUploading ? (
+                            <span>사진 업로드 중...</span>
+                        ) : isSuccess ? (
                             <>
                                 <CheckmarkIcon />
                                 <span>{entryToEdit ? '수정 완료' : '기록 저장 완료'}</span>
@@ -590,7 +616,7 @@ const JournalForm: React.FC<JournalFormProps> = ({ onAddEntry, entryToEdit, onUp
                         )}
                     </button>
                     {entryToEdit && (
-                        <button type="button" onClick={onCancelEdit} className="w-full bg-stone-200 dark:bg-slate-700 text-stone-700 dark:text-slate-200 font-bold py-3 px-4 rounded-md hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors">
+                        <button type="button" onClick={onCancelEdit} disabled={isUploading} className="w-full bg-stone-200 dark:bg-slate-700 text-stone-700 dark:text-slate-200 font-bold py-3 px-4 rounded-md hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors disabled:opacity-50">
                             취소
                         </button>
                     )}

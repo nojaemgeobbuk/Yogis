@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-// [변경] BrowserRouter as Router 삭제함 (여기선 라우터 기능만 사용)
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import JournalForm from './components/JournalForm';
 import CardStack from './components/CardStack';
@@ -18,13 +17,12 @@ import {
   getJournalEntries, 
   updateJournalEntry as dbUpdateJournalEntry, 
   deleteJournalEntry as dbDeleteJournalEntry,
-  NewJournalEntry
+  deleteImage, // 스토리지에서 이미지 삭제하는 함수
 } from './services/supabaseService';
 import { signOut, signInWithGoogle, signInWithApple } from './services/authService';
 import Auth from './components/Auth';
 import { Session } from '@supabase/supabase-js';
 
-// ... (아이콘 컴포넌트들은 그대로 유지) ...
 const CogIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -55,8 +53,9 @@ const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
   );
 };
 
-// [변경] 기존의 App 컴포넌트(Router 감싸던 껍데기)를 삭제하고
-// AppContent를 App으로 이름을 바꿔서 바로 내보냅니다.
+// 최종적으로 우리가 원하는 데이터 타입
+type JournalFormData = Omit<JournalEntry, 'id' | 'user_id'>;
+
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,14 +90,19 @@ const App: React.FC = () => {
     }
   }, [session]);
 
-  const addJournalEntry = async (entry: Omit<NewJournalEntry, 'user_id'>) => {
-    if (!session?.user) return;
+  // ✅ [수정] Storage 업그레이드에 맞춰 재구성
+  const addJournalEntry = async (formData: JournalFormData) => {
+    if (!session?.user) {
+        alert("로그인이 필요합니다. 다시 로그인해주세요.");
+        return;
+    }
     
-    const newEntry: NewJournalEntry = { ...entry, user_id: session.user.id };
-    const newlyAddedEntry = await dbAddJournalEntry(newEntry);
+    const newEntryPayload = { ...formData, user_id: session.user.id };
+
+    const newlyAddedEntry = await dbAddJournalEntry(newEntryPayload);
 
     if (newlyAddedEntry) {
-      setEntries(prevEntries => [newlyAddedEntry, ...prevEntries]);
+      setEntries(prevEntries => [newlyAddedEntry, ...prevEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setLatestEntryForFeedback(newlyAddedEntry);
     }
   };
@@ -110,6 +114,30 @@ const App: React.FC = () => {
     }
     setEditingEntry(null);
   };
+
+  // ✅ [수정] 일지 삭제 시, 연결된 사진도 함께 삭제하도록 로직 추가
+  const handleDeleteEntry = async (id: string) => {
+    const entryToDelete = entries.find(e => e.id === id);
+    if (!entryToDelete) return;
+
+    // 1. Storage에서 사진들 삭제 (실패해도 계속 진행)
+    if (entryToDelete.photos && entryToDelete.photos.length > 0) {
+        console.log(`Deleting ${entryToDelete.photos.length} photos from Storage...`);
+        const deletePromises = entryToDelete.photos.map(photo => deleteImage(photo.url));
+        try {
+            await Promise.all(deletePromises);
+            console.log("Photos deleted successfully from Storage.");
+        } catch (error) {
+            console.error("Failed to delete some photos from storage, but proceeding to delete entry:", error);
+        }
+    }
+
+    // 2. 데이터베이스에서 일지 항목 삭제
+    const deletedEntry = await dbDeleteJournalEntry(id);
+    if (deletedEntry) {
+        setEntries(prev => prev.filter(e => e.id !== id));
+    }
+  }
   
   const handleStartEdit = (entry: JournalEntry) => {
     setEditingEntry(entry);
@@ -119,11 +147,6 @@ const App: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingEntry(null);
   };
-
-  const handleDeleteEntry = async (id: string) => {
-    await dbDeleteJournalEntry(id);
-    setEntries(entries.filter(e => e.id !== id));
-  }
 
   const handleGenerateSouvenir = (entry: JournalEntry) => {
     setSouvenirEntry(entry);
@@ -199,7 +222,9 @@ const App: React.FC = () => {
           </header>
 
           <main className="container mx-auto px-4">
+             {/* ✅ [수정] userId를 JournalForm으로 전달 */}
             <JournalForm 
+                userId={session.user.id} 
                 onAddEntry={addJournalEntry}
                 entryToEdit={editingEntry}
                 onUpdateEntry={handleUpdateEntry}
