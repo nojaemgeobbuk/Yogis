@@ -153,9 +153,9 @@ const App: React.FC = () => {
   };
   
   const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
-    const entry = entries.find(e => e.id === id);
-    if (entry) {
-        await handleUpdateEntry({ id, isFavorite: !isFavorite });
+    const updatedEntry = await dbUpdateJournalEntry({ id, is_favorite: isFavorite });
+    if (updatedEntry) {
+      setEntries(entries.map(e => e.id === id ? updatedEntry : e));
     }
   };
 
