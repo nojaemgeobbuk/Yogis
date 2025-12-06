@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { JournalEntry } from '../types';
 import AnalyticsDayDetailModal from './AnalyticsDayDetailModal';
 
@@ -135,26 +134,37 @@ const AnalyticsView: React.FC<{ entries: JournalEntry[] }> = ({ entries }) => {
                  <div className="grid grid-cols-7 gap-2 text-center text-sm font-semibold text-stone-500 dark:text-slate-400 mb-2">
                     {['일', '월', '화', '수', '목', '금', '토'].map(day => <div key={day}>{day}</div>)}
                 </div>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1.5">
                     {calendarGrid.map((day, index) => {
-                         const dayData = day ? monthlyStats.entriesByDay[day] : undefined;
-                         const duration = dayData?.totalDuration || 0;
-                         const colorClass = getHeatmapColor(duration);
-                         const yyyymmdd = day ? `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : '';
+                        const dayData = day ? monthlyStats.entriesByDay[day] : undefined;
+                        const hasEntries = dayData && dayData.entries.length > 0;
 
                         return (
-                             <div key={index} className="aspect-square">
+                            <div key={index} className="aspect-square">
                                 {day ? (
-                                    <button 
+                                    <button
                                         onClick={() => handleDateClick(day)}
-                                        className={`w-full h-full rounded-md flex items-center justify-center font-bold transition-all duration-200 hover:ring-2 hover:ring-teal-500 dark:hover:ring-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 ${colorClass}`}
-                                        title={`${yyyymmdd} • ${duration}분`}
+                                        className={`w-full h-full rounded-md p-1 text-left align-top transition-all duration-200 hover:ring-2 hover:ring-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 overflow-hidden ${hasEntries ? 'bg-stone-50 dark:bg-slate-800/80' : 'bg-stone-100/50 dark:bg-slate-700/60'}`}
                                     >
-                                        {day}
+                                        <span className={`font-semibold text-sm ${hasEntries ? 'text-stone-700 dark:text-slate-200' : 'text-stone-400 dark:text-slate-500'}`}>{day}</span>
+
+                                        {hasEntries && (
+                                            <div className="flex flex-col gap-0.5 mt-1">
+                                                {dayData.entries.slice(0, 3).map((entry, entryIndex) => (
+                                                    <div
+                                                        key={entryIndex}
+                                                        className={`w-full rounded-sm text-[10px] leading-tight px-1 truncate ${getHeatmapColor(parseDuration(entry.duration))}`}
+                                                        title={entry.title}
+                                                    >
+                                                        {entry.title?.split(' ').slice(0, 2).join(' ') || '수련'}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </button>
                                 ) : <div />}
-                             </div>
-                        )
+                            </div>
+                        );
                     })}
                 </div>
             </section>

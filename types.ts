@@ -9,7 +9,7 @@ export interface YogaPose {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
-export type PhotoTheme = '오늘의 자세' | 'Before & After' | '내 공간의 변화';
+export type PhotoTheme = '오늘의 자세' | '오늘 하루' | '도반의 추억';
 
 export interface PhotoEntry {
   url: string; // base64 encoded image or storage URL
@@ -21,6 +21,7 @@ export interface JournalEntry {
   id: string;
   user_id: string;
   date: string;
+  title?: string; // 수련 기록의 제목
   photos: PhotoEntry[];
   notes: string;
   hashtags: string[];
