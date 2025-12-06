@@ -1,3 +1,85 @@
+@import url('https://rsms.me/inter/inter.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: 'Inter', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply min-h-screen bg-stone-100 text-stone-800 antialiased;
+  }
+
+  html.dark body {
+    @apply bg-slate-900 text-slate-200;
+  }
+}
+
+@keyframes walk-across {
+  0% {
+    transform: translateX(10px) scaleX(1);
+  }
+  48% {
+    transform: translateX(calc(100vw - 160px)) scaleX(1);
+  }
+  52% {
+    transform: translateX(calc(100vw - 160px)) scaleX(-1);
+  }
+  98% {
+    transform: translateX(10px) scaleX(-1);
+  }
+  100% {
+    transform: translateX(10px) scaleX(1);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    transform: scale(0.5) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5) rotate(90deg);
+    opacity: 0;
+  }
+}
+
+@keyframes subtle-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out;
+}
+
+.animated-gradient-bg {
+  background-size: 200% 200%;
+  animation: subtle-gradient 15s ease infinite;
+}
