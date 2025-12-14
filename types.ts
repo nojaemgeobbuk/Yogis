@@ -12,10 +12,12 @@ export interface YogaPose {
 export type PhotoTheme = '오늘의 자세' | '오늘 하루' | '도반의 추억';
 
 export interface PhotoEntry {
-  url: string; // base64 encoded image or storage URL
-  theme?: PhotoTheme;
-  caption?: string;
-}
+  export interface PhotoEntry {
+    url: string;
+    caption?: string;
+    theme?: PhotoTheme;
+    file?: File; // 👈 [이 줄이 꼭 있어야 합니다!]
+  }
 
 export interface JournalEntry {
   id: string;

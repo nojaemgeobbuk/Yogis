@@ -66,17 +66,6 @@ const DeleteIcon = () => (
     </svg>
 );
 
-const linkify = (text: string) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
-    return parts.map((part, i) => {
-        if (part.match(urlRegex)) {
-            return <a href={part} key={i} target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 underline decoration-teal-400/30 underline-offset-2">{part}</a>;
-        }
-        return part;
-    });
-};
-
 const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGenerateSouvenir, onToggleFavorite, isHovered }) => {
   const isBeforeAndAfter = entry.photos.length === 2 && entry.photos.some(p => p.theme === 'Before & After');
 
@@ -186,9 +175,10 @@ const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGe
 
       <div className="flex-grow overflow-y-auto pr-2 flex flex-col custom-scrollbar">
         {entry.notes && (
-          <div className="text-sm md:text-base text-zinc-300 mb-6 whitespace-pre-wrap leading-loose font-light">
-            {linkify(entry.notes)}
-          </div>
+          <div 
+            className="prose prose-sm md:prose-base prose-invert max-w-none mb-6 font-light"
+            dangerouslySetInnerHTML={{ __html: entry.notes }}
+          />
         )}
 
         {entry.poses.length > 0 && (

@@ -114,7 +114,7 @@ const AnalyticsView: React.FC<{ entries: JournalEntry[] }> = ({ entries }) => {
     ];
 
     return (
-        <div className="w-full max-w-4xl mx-auto my-8 p-6 bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-stone-200 dark:border-slate-700">
+        <div className="w-full max-w-7xl mx-auto my-12 p-6 bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-stone-200 dark:border-slate-700">
             <header className="flex justify-between items-center mb-6">
                 <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-stone-200/80 dark:hover:bg-slate-700/80 transition-colors" aria-label="Previous month"><ChevronLeftIcon /></button>
                 <h2 className="text-2xl font-bold text-stone-700 dark:text-slate-200">{viewDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })}</h2>

@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import type { JournalEntry, YogaPose, PhotoEntry } from '../types';
 import DatePicker from './DatePicker';
 import { ALL_POSES } from '../yogaPoses';
@@ -31,9 +33,8 @@ interface JournalFormProps {
 }
 
 const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEdit, onUpdateEntry, onCancelEdit }) => {
-    // --- 상태 관리 ---
     const [date, setDate] = useState(new Date());
-    const [title, setTitle] = useState(''); // [추가] 제목 상태
+    const [title, setTitle] = useState('');
     const [isDatePickerOpen, setDatePickerOpen] = useState(false);
     const [photos, setPhotos] = useState<PhotoEntry[]>([]);
     const [notes, setNotes] = useState('');
@@ -52,17 +53,24 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
     const dropdownRef = useRef<HTMLDivElement>(null);
     const todaysQuote = useMemo(() => INSPIRATIONAL_QUOTES[new Date().getDate() % INSPIRATIONAL_QUOTES.length], []);
 
-    // 포즈 검색 필터링
+    const modules = useMemo(() => ({
+        toolbar: [
+          [{ 'header': [1, 2, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['clean']
+        ],
+    }), []);
+
     const filteredPoses = useMemo(() => {
         if (!poseQuery.trim()) return [];
         const lowerQuery = poseQuery.toLowerCase();
         return ALL_POSES.filter(pose => pose.name.toLowerCase().includes(lowerQuery) || pose.sanskritName.toLowerCase().includes(lowerQuery));
     }, [poseQuery]);
 
-    // 폼 초기화 함수
     const resetForm = useCallback(() => {
         setDate(new Date());
-        setTitle(''); // [추가] 제목 초기화
+        setTitle('');
         setDatePickerOpen(false);
         setPhotos([]);
         setNotes('');
@@ -77,11 +85,10 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
         setIsUploading(false);
     }, []);
 
-    // 수정 모드 진입 시 데이터 채우기
     useEffect(() => {
         if (entryToEdit) {
             setDate(new Date(entryToEdit.date));
-            setTitle(entryToEdit.title || ''); // [추가] 제목 불러오기
+            setTitle(entryToEdit.title || '');
             setPhotos(entryToEdit.photos);
             setNotes(entryToEdit.notes);
             setHashtags(entryToEdit.hashtags.join(', '));
@@ -93,7 +100,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
         }
     }, [entryToEdit, resetForm]);
 
-    // 외부 클릭 시 드롭다운 닫기
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -104,7 +110,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // --- 핸들러 함수들 ---
     const handleDateSelect = (newDate: Date) => {
         setDate(newDate);
         setDatePickerOpen(false);
@@ -118,7 +123,11 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
         }
         
         files.forEach((file: File) => {
-            const newPhoto: any = { url: URL.createObjectURL(file), file: file };
+            // [수정] 이제 types.ts가 수정되었다면 any가 필요 없습니다.
+            const newPhoto: PhotoEntry = { 
+                url: URL.createObjectURL(file), 
+                file: file 
+            };
             setPhotos(prev => [...prev, newPhoto]);
         });
         event.target.value = '';
@@ -152,11 +161,13 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
         if (event.key === 'Enter') { event.preventDefault(); handleAddFirstMatchPose(); }
     };
 
-    // 폼 제출
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         if (isUploading) return;
-        if (!notes.trim() && photos.length === 0 && !title.trim()) {
+
+        const isNoteEmpty = notes.replace(/<(.|\n)*?>/g, '').trim().length === 0;
+
+        if (isNoteEmpty && photos.length === 0 && !title.trim()) {
             alert("제목, 사진, 또는 노트 중 하나는 입력해주세요.");
             return;
         }
@@ -164,10 +175,16 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
         setIsUploading(true);
 
         try {
-            // 이미지 업로드 처리
+            // [수정] 업로드 실패 시 에러를 던지도록 안전장치 추가
             const processedPhotos = await Promise.all(photos.map(async (photo) => {
-                if ((photo as any).file) {
-                    const publicUrl = await uploadImage((photo as any).file, userId);
+                if (photo.file) {
+                    const publicUrl = await uploadImage(photo.file, userId);
+                    
+                    // 만약 publicUrl이 null이면(업로드 실패) 에러 발생
+                    if (!publicUrl) {
+                        throw new Error(`이미지 업로드 실패: ${photo.file.name}`);
+                    }
+                    
                     return { ...photo, url: publicUrl, file: undefined };
                 }
                 return photo;
@@ -175,7 +192,7 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
 
             const commonData = {
                 date: date.toISOString(),
-                title, // [추가] 제출 데이터에 제목 포함
+                title,
                 photos: processedPhotos as PhotoEntry[],
                 notes,
                 hashtags: hashtags.split(',').map(h => h.trim()).filter(Boolean),
@@ -196,15 +213,15 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                 if (!entryToEdit) resetForm();
             }, 2000);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("저장 중 에러 발생:", error);
-            alert("저장 중 문제가 발생했습니다.");
+            // 에러 메시지 알림
+            alert(error.message || "저장 중 문제가 발생했습니다.");
         } finally {
             setIsUploading(false);
         }
     };
 
-    // 날짜 포맷팅 헬퍼
     const formattedDate = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 
     return (
@@ -219,7 +236,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
             
             <form onSubmit={handleSubmit} className="space-y-6">
 
-                {/* 1. [추가] 제목 입력 필드 */}
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium text-stone-600 dark:text-slate-300 mb-1">제목</label>
                     <input
@@ -232,11 +248,9 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                     />
                 </div>
 
-                {/* 2. 사진 업로드 영역 */}
                 <div>
                     <label className="block text-sm font-medium text-stone-600 dark:text-slate-300 mb-2">사진 (최대 2장)</label>
                     <div className="flex flex-wrap gap-4">
-                        {/* 사진 미리보기 리스트 */}
                         {photos.map((photo, index) => (
                             <div key={index} className="relative group w-32">
                                 <img src={photo.url} alt={`preview-${index}`} className="w-32 h-32 object-cover rounded-lg shadow-sm" />
@@ -253,7 +267,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                             </div>
                         ))}
                         
-                        {/* 업로드 버튼 */}
                         {photos.length < 2 && (
                             <label className="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed border-stone-300 dark:border-slate-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-slate-700/50 transition">
                                 <PhotoIcon />
@@ -264,17 +277,18 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                     </div>
                 </div>
 
-                {/* 3. 노트 입력 */}
                 <div>
                     <label htmlFor="notes" className="block text-sm font-medium text-stone-600 dark:text-slate-300 mb-1">수련 노트</label>
-                    <textarea 
-                        id="notes" 
-                        value={notes} 
-                        onChange={(e) => setNotes(e.target.value)} 
-                        rows={4} 
-                        className="w-full p-2 border border-stone-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 transition bg-white dark:bg-slate-900 text-stone-800 dark:text-slate-200" 
-                        placeholder="오늘의 수련은 어떠셨나요?" 
-                    />
+                    <div className="bg-white dark:bg-slate-900 text-stone-800 dark:text-slate-200 rounded-md overflow-hidden border border-stone-300 dark:border-slate-600 focus-within:ring-2 focus-within:ring-teal-500">
+                        <ReactQuill 
+                            theme="snow"
+                            value={notes}
+                            onChange={setNotes}
+                            modules={modules}
+                            className="bg-white dark:bg-slate-900 text-stone-800 dark:text-slate-200"
+                            placeholder="오늘의 수련은 어떠셨나요?"
+                        />
+                    </div>
                 </div>
                 
                 {/* 4. 날짜 및 시간 */}
@@ -362,7 +376,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                         </button>
                     </div>
 
-                    {/* 자동완성 드롭다운 */}
                     {showPoseSuggestions && poseQuery && (
                         <ul className="absolute z-20 w-full bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-600 rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
                             {filteredPoses.length > 0 ? (
@@ -382,7 +395,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                         </ul>
                     )}
 
-                    {/* 선택된 포즈 태그들 */}
                     <div className="flex flex-wrap gap-2 mt-2">
                         {poses.map((pose) => (
                             <span key={pose.name} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200">
@@ -394,7 +406,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                         ))}
                     </div>
 
-                    {/* 직접 추가 폼 (간단 버전) */}
                     {isManualFormOpen && (
                         <div className="mt-4 p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg border border-stone-200 dark:border-slate-700">
                              <h4 className="text-sm font-bold mb-2 text-stone-700 dark:text-slate-300">새로운 자세 추가</h4>
@@ -429,7 +440,6 @@ const JournalForm: React.FC<JournalFormProps> = ({ userId, onAddEntry, entryToEd
                     )}
                 </div>
 
-                {/* 7. 제출 버튼 */}
                 <div className="flex items-center space-x-4 pt-4 border-t border-stone-200 dark:border-slate-700 mt-6">
                     <button 
                         type="submit" 
