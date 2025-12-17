@@ -66,6 +66,9 @@ const App: React.FC = () => {
   const [latestEntryForFeedback, setLatestEntryForFeedback] = useState<JournalEntry | null>(null);
   const [isDataModalOpen, setDataModalOpen] = useState(false);
   const { theme } = useTheme();
+  const [isSelectionMode, setSelectionMode] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
+
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -89,6 +92,13 @@ const App: React.FC = () => {
       setEntries([]);
     }
   }, [session]);
+  
+  // Turn off selection mode when route changes
+  const location = useLocation();
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedEntries(new Set());
+  }, [location.pathname]);
 
   // ✅ [수정] Storage 업그레이드에 맞춰 재구성
   const addJournalEntry = async (formData: JournalFormData) => {
@@ -140,6 +150,7 @@ const App: React.FC = () => {
   }
   
   const handleStartEdit = (entry: JournalEntry) => {
+    if (isSelectionMode) return; 
     setEditingEntry(entry);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -156,6 +167,26 @@ const App: React.FC = () => {
     const updatedEntry = await dbUpdateJournalEntry({ id, is_favorite: isFavorite });
     if (updatedEntry) {
       setEntries(entries.map(e => e.id === id ? updatedEntry : e));
+    }
+  };
+  
+  const handleToggleSelection = (id: string) => {
+    setSelectedEntries(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedEntries.size === filteredEntries.length) {
+      setSelectedEntries(new Set());
+    } else {
+      setSelectedEntries(new Set(filteredEntries.map(e => e.id)));
     }
   };
 
@@ -184,6 +215,10 @@ const App: React.FC = () => {
       const merged = [...entries, ...newEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setEntries(merged);
   };
+  
+  const openDataModal = () => setDataModalOpen(true);
+  const closeDataModal = () => setDataModalOpen(false);
+
 
   if (loading) {
     return (
@@ -202,7 +237,16 @@ const App: React.FC = () => {
           <header className="text-center py-10 relative">
             <div className="absolute top-4 right-4 z-10 flex space-x-2">
               <button
-                onClick={() => setDataModalOpen(true)}
+                onClick={() => setSelectionMode(!isSelectionMode)}
+                className={`p-2 rounded-full ${isSelectionMode ? 'bg-teal-600 text-white' : 'bg-stone-200/50 dark:bg-slate-700/50'} text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors`}
+                aria-label="일지 선택 모드"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </button>
+              <button
+                onClick={openDataModal}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
                 aria-label="데이터 관리"
               >
@@ -222,14 +266,15 @@ const App: React.FC = () => {
           </header>
 
           <main className="container mx-auto px-4">
-             {/* ✅ [수정] userId를 JournalForm으로 전달 */}
-            <JournalForm 
-                userId={session.user.id} 
-                onAddEntry={addJournalEntry}
-                entryToEdit={editingEntry}
-                onUpdateEntry={handleUpdateEntry}
-                onCancelEdit={handleCancelEdit}
-            />
+            {!isSelectionMode && (
+                 <JournalForm 
+                    userId={session.user.id} 
+                    onAddEntry={addJournalEntry}
+                    entryToEdit={editingEntry}
+                    onUpdateEntry={handleUpdateEntry}
+                    onCancelEdit={handleCancelEdit}
+                />
+            )}
             
             <div className="my-8 border-b border-stone-300 dark:border-slate-700 pb-4 flex justify-center">
                 <div className="flex space-x-4 p-2 bg-stone-200 dark:bg-slate-800 rounded-full">
@@ -238,6 +283,27 @@ const App: React.FC = () => {
                     <NavLink to="/analytics" label="월간 분석" />
                 </div>
             </div>
+            
+            {isSelectionMode && (
+                <div className="mb-4 p-4 bg-stone-200 dark:bg-slate-800 rounded-lg flex justify-between items-center">
+                    <span className="font-bold text-lg">{selectedEntries.size}개 선택됨</span>
+                    <div>
+                        <button 
+                            onClick={handleSelectAll}
+                            className="mr-4 px-4 py-2 rounded-md bg-stone-300 dark:bg-slate-700 hover:bg-stone-400 dark:hover:bg-slate-600 transition-colors"
+                        >
+                            {selectedEntries.size === filteredEntries.length ? '전체 해제' : '전체 선택'}
+                        </button>
+                        <button 
+                            onClick={openDataModal}
+                            disabled={selectedEntries.size === 0}
+                            className="px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        >
+                            선택 다운로드 (.md)
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <Routes>
               <Route path="/" element={
@@ -251,6 +317,9 @@ const App: React.FC = () => {
                       onDeleteEntry={handleDeleteEntry}
                       onGenerateSouvenir={handleGenerateSouvenir} 
                       onToggleFavorite={handleToggleFavorite} 
+                      isSelectionMode={isSelectionMode}
+                      selectedEntries={selectedEntries}
+                      onToggleSelection={handleToggleSelection}
                   />
                 </>
               } />
@@ -266,7 +335,7 @@ const App: React.FC = () => {
 
           {souvenirEntry && <SouvenirCardModal entry={souvenirEntry} onClose={() => setSouvenirEntry(null)} />}
           {latestEntryForFeedback && <PostPracticeFeedbackModal entry={latestEntryForFeedback} allEntries={entries} onClose={() => setLatestEntryForFeedback(null)} />}
-          {isDataModalOpen && <DataManagementModal entries={entries} onRestore={handleRestoreData} onClose={() => setDataModalOpen(false)} />}
+          {isDataModalOpen && <DataManagementModal entries={entries} onRestore={handleRestoreData} onClose={closeDataModal} selectedEntryIds={selectedEntries} />}
         </>
       )}
     </div>

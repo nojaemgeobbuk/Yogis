@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { JournalEntry } from '../types';
 import JournalCard from './JournalCard';
@@ -9,9 +8,21 @@ interface CardStackProps {
   onDeleteEntry: (id: string) => void;
   onGenerateSouvenir: (entry: JournalEntry) => void;
   onToggleFavorite: (id: string, isFavorite: boolean) => void;
+  isSelectionMode: boolean;
+  selectedEntries: Set<string>;
+  onToggleSelection: (id: string) => void;
 }
 
-const CardStack: React.FC<CardStackProps> = ({ entries, onEditEntry, onDeleteEntry, onGenerateSouvenir, onToggleFavorite }) => {
+const CardStack: React.FC<CardStackProps> = ({ 
+  entries, 
+  onEditEntry, 
+  onDeleteEntry, 
+  onGenerateSouvenir, 
+  onToggleFavorite, 
+  isSelectionMode, 
+  selectedEntries, 
+  onToggleSelection 
+}) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
@@ -32,42 +43,64 @@ const CardStack: React.FC<CardStackProps> = ({ entries, onEditEntry, onDeleteEnt
 
   return (
     <div>
-      <div className="flex justify-center mb-4">
-        <button 
-          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          className={`px-4 py-2 rounded-full font-semibold transition-colors ${
-            showFavoritesOnly 
-              ? "bg-amber-400 text-white" 
-              : "bg-stone-200 dark:bg-slate-700 text-stone-700 dark:text-slate-300"
-          }`}
-        >
-          {showFavoritesOnly ? "★ 즐겨찾기만 보기" : "전체 보기"}
-        </button>
-      </div>
+      {!isSelectionMode && (
+        <div className="flex justify-center mb-4">
+          <button 
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className={`px-4 py-2 rounded-full font-semibold transition-colors ${
+              showFavoritesOnly 
+                ? "bg-amber-400 text-white" 
+                : "bg-stone-200 dark:bg-slate-700 text-stone-700 dark:text-slate-300"
+            }`}
+          >
+            {showFavoritesOnly ? "★ 즐겨찾기만 보기" : "전체 보기"}
+          </button>
+        </div>
+      )}
       <div 
-        className="relative w-full h-[600px] my-12 flex items-center justify-center"
-        style={{ perspective: '1200px' }}
+        className={`relative w-full h-[600px] my-12 flex items-center justify-center ${isSelectionMode ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' : ''}`}
+        style={{ perspective: isSelectionMode ? 'none' : '1200px' }}
         onMouseLeave={() => setHoveredIndex(null)}
       >
         {filteredEntries.map((entry, index) => {
-          const isHovered = hoveredIndex === index;
+          const isHovered = hoveredIndex === index && !isSelectionMode;
           const totalEntries = filteredEntries.length;
           
           let transform = '';
-          if (hoveredIndex !== null) {
-            const sign = Math.sign(index - hoveredIndex);
-            const distance = Math.abs(index - hoveredIndex);
-            if (isHovered) {
-               transform = `translateX(0) rotateY(0) scale(1.05)`;
+          if (!isSelectionMode) {
+            if (hoveredIndex !== null) {
+              const sign = Math.sign(index - hoveredIndex);
+              const distance = Math.abs(index - hoveredIndex);
+              if (isHovered) {
+                transform = `translateX(0) rotateY(0) scale(1.05)`;
+              } else {
+                transform = `translateX(${sign * (250 + (distance -1) * 50)}px) rotateY(${-sign * 40}deg) scale(0.95)`;
+              }
             } else {
-               transform = `translateX(${sign * (250 + (distance -1) * 50)}px) rotateY(${-sign * 40}deg) scale(0.95)`;
+              const offset = (totalEntries / 2 - index) * 50;
+              transform = `translateX(${-offset}px) rotateY(15deg) scale(1)`;
             }
-          } else {
-            const offset = (totalEntries / 2 - index) * 50;
-            transform = `translateX(${-offset}px) rotateY(15deg) scale(1)`;
           }
 
-          return (
+          const cardContent = (
+            <JournalCard 
+              entry={entry} 
+              onEdit={onEditEntry} 
+              onDelete={onDeleteEntry}
+              onGenerateSouvenir={onGenerateSouvenir} 
+              onToggleFavorite={onToggleFavorite} 
+              isHovered={isHovered} 
+              isSelectionMode={isSelectionMode}
+              isSelected={selectedEntries.has(entry.id)}
+              onToggleSelection={onToggleSelection}
+            />
+          );
+
+          return isSelectionMode ? (
+            <div key={entry.id} onClick={() => onToggleSelection(entry.id)} className="cursor-pointer h-full">
+              {cardContent}
+            </div>
+          ) : (
             <div
               key={entry.id}
               onMouseEnter={() => setHoveredIndex(index)}
@@ -78,14 +111,7 @@ const CardStack: React.FC<CardStackProps> = ({ entries, onEditEntry, onDeleteEnt
                 transition: 'transform 0.5s ease-in-out, z-index 0.5s',
               }}
             >
-              <JournalCard 
-                  entry={entry} 
-                  onEdit={onEditEntry} 
-                  onDelete={onDeleteEntry}
-                  onGenerateSouvenir={onGenerateSouvenir} 
-                  onToggleFavorite={(id, isFavorite) => onToggleFavorite(id, isFavorite)} 
-                  isHovered={isHovered} 
-              />
+              {cardContent}
             </div>
           );
         })}

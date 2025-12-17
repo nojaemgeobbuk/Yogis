@@ -9,6 +9,9 @@ interface JournalCardProps {
   onGenerateSouvenir: (entry: JournalEntry) => void;
   onToggleFavorite: (id: string, isFavorite: boolean) => void;
   isHovered?: boolean;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (id: string) => void;
 }
 
 // ==========================================
@@ -66,7 +69,10 @@ const DeleteIcon = () => (
     </svg>
 );
 
-const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGenerateSouvenir, onToggleFavorite, isHovered }) => {
+const JournalCard: React.FC<JournalCardProps> = ({ 
+    entry, onEdit, onDelete, onGenerateSouvenir, onToggleFavorite, 
+    isHovered, isSelectionMode, isSelected, onToggleSelection 
+}) => {
   const isBeforeAndAfter = entry.photos.length === 2 && entry.photos.some(p => p.theme === 'Before & After');
 
   const handleDelete = () => {
@@ -74,15 +80,32 @@ const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGe
         onDelete(entry.id);
     }
   }
+  
+  const handleCardClick = () => {
+    if (isSelectionMode && onToggleSelection) {
+      onToggleSelection(entry.id);
+    }
+  };
 
   return (
-    <div className={`w-full h-full rounded-2xl overflow-hidden flex flex-col p-6 border transition-all duration-300 ease-out bg-[#202020]
-        ${isHovered 
-            ? 'shadow-2xl border-white/10 transform -translate-y-1' 
-            : 'shadow-lg border-white/5'
+    <div 
+      onClick={handleCardClick}
+      className={`w-full h-full rounded-2xl overflow-hidden flex flex-col p-6 border transition-all duration-300 ease-out relative 
+        ${isSelectionMode 
+            ? `cursor-pointer ${isSelected ? 'border-teal-500 bg-teal-900/20 shadow-lg' : 'border-white/10 bg-[#202020]'}`
+            : `bg-[#202020] ${isHovered ? 'shadow-2xl border-white/10 transform -translate-y-1' : 'shadow-lg border-white/5'}`
         }`}
     >
-      <div className="flex-shrink-0">
+       {isSelectionMode && (
+          <div className="absolute top-4 right-4 w-6 h-6 rounded-full border-2 border-white/50 flex items-center justify-center bg-black/30">
+              {isSelected && (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+              )}
+          </div>
+      )}
+      <div className={`flex-shrink-0 ${isSelectionMode && isSelected ? 'opacity-80' : ''}`}>
         <div className="flex justify-between items-start mb-4">
           <div className="flex flex-col">
             <h3 className="text-xl font-bold font-serif text-zinc-100 tracking-wide">수련 일지</h3>
@@ -91,49 +114,50 @@ const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGe
             </p>
           </div>
           
-          <div className="flex items-center space-x-1 bg-white/5 rounded-full p-1 border border-white/5">
-              <div className="relative group">
-                <button 
-                    onClick={() => onToggleFavorite(entry.id, !entry.is_favorite)} 
-                    className={`p-2 rounded-full transition-colors ${entry.is_favorite ? 'text-amber-400 bg-amber-400/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
-                >
-                    <FavoriteStarIcon isFavorite={!!entry.is_favorite} />
-                </button>
-                 {/* Tooltip */}
-                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    {entry.is_favorite ? '즐겨찾기 해제' : '즐겨찾기'}
-                </span>
-             </div>
+          {!isSelectionMode && (
+            <div className="flex items-center space-x-1 bg-white/5 rounded-full p-1 border border-white/5">
+                <div className="relative group">
+                  <button 
+                      onClick={(e) => {e.stopPropagation(); onToggleFavorite(entry.id, !entry.is_favorite)}} 
+                      className={`p-2 rounded-full transition-colors ${entry.is_favorite ? 'text-amber-400 bg-amber-400/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+                  >
+                      <FavoriteStarIcon isFavorite={!!entry.is_favorite} />
+                  </button>
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      {entry.is_favorite ? '즐겨찾기 해제' : '즐겨찾기'}
+                  </span>
+              </div>
 
-             <div className="w-px h-4 bg-white/10 mx-1"></div>
-
-             <div className="relative group">
-                <button onClick={() => onGenerateSouvenir(entry)} className="p-2 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors">
-                    <SouvenirIcon />
-                </button>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    티켓 생성
-                </span>
-             </div>
-
-             <div className="relative group">
-                <button onClick={() => onEdit(entry)} className="p-2 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors">
-                    <EditIcon />
-                </button>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    수정
-                </span>
-             </div>
+              <div className="w-px h-4 bg-white/10 mx-1"></div>
 
               <div className="relative group">
-                <button onClick={handleDelete} className="p-2 rounded-full text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-                    <DeleteIcon />
-                </button>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    삭제
-                </span>
-             </div>
-          </div>
+                  <button onClick={(e) => {e.stopPropagation(); onGenerateSouvenir(entry)}} className="p-2 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors">
+                      <SouvenirIcon />
+                  </button>
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      티켓 생성
+                  </span>
+              </div>
+
+              <div className="relative group">
+                  <button onClick={(e) => {e.stopPropagation(); onEdit(entry)}} className="p-2 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors">
+                      <EditIcon />
+                  </button>
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      수정
+                  </span>
+              </div>
+
+                <div className="relative group">
+                  <button onClick={(e) => {e.stopPropagation(); handleDelete()}} className="p-2 rounded-full text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                      <DeleteIcon />
+                  </button>
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max rounded px-2 py-1 text-[10px] text-white bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      삭제
+                  </span>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center space-x-4 mb-6 text-sm text-zinc-400">
@@ -173,7 +197,7 @@ const JournalCard: React.FC<JournalCardProps> = ({ entry, onEdit, onDelete, onGe
         )}
       </div>
 
-      <div className="flex-grow overflow-y-auto pr-2 flex flex-col custom-scrollbar">
+      <div className={`flex-grow overflow-y-auto pr-2 flex flex-col custom-scrollbar ${isSelectionMode && isSelected ? 'opacity-80' : ''}`}>
         {entry.notes && (
           <div 
             className="prose prose-sm md:prose-base prose-invert max-w-none mb-6 font-light"
