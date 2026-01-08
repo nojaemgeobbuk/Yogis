@@ -11,6 +11,7 @@ import ThemeToggle from './components/ThemeToggle';
 import { useTheme } from './contexts/ThemeContext';
 import PostPracticeFeedbackModal from './components/PostPracticeFeedbackModal';
 import DataManagementModal from './components/DataManagementModal';
+import { motion, AnimatePresence, PageWrapper, MotionButton, FadeIn } from './components/motion';
 import { 
   supabase, 
   addJournalEntry as dbAddJournalEntry, 
@@ -40,15 +41,19 @@ const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
-    <Link
-      to={to}
-      className={`px-6 py-2 rounded-full text-lg font-semibold transition-colors duration-300 ${
-        isActive
-          ? 'bg-teal-600 text-white shadow-md'
-          : 'text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700'
-      }`}
-    >
-      {label}
+    <Link to={to}>
+      <motion.span
+        className={`inline-block px-6 py-2 rounded-full text-lg font-semibold transition-colors duration-300 ${
+          isActive
+            ? 'bg-teal-600 text-white shadow-md'
+            : 'text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700'
+        }`}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+      >
+        {label}
+      </motion.span>
     </Link>
   );
 };
@@ -236,30 +241,39 @@ const App: React.FC = () => {
         <>
           <header className="text-center py-10 relative">
             <div className="absolute top-4 right-4 z-10 flex space-x-2">
-              <button
+              <motion.button
                 onClick={() => setSelectionMode(!isSelectionMode)}
                 className={`p-2 rounded-full ${isSelectionMode ? 'bg-teal-600 text-white' : 'bg-stone-200/50 dark:bg-slate-700/50'} text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors`}
                 aria-label="일지 선택 모드"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.2 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={openDataModal}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
                 aria-label="데이터 관리"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.2 }}
               >
                 <CogIcon />
-              </button>
+              </motion.button>
               <ThemeToggle />
-              <button
+              <motion.button
                 onClick={signOut}
                 className="p-2 rounded-full bg-stone-200/50 dark:bg-slate-700/50 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
                 aria-label="로그아웃"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.2 }}
               >
                 <LogoutIcon />
-              </button>
+              </motion.button>
             </div>
             <h1 className="text-5xl font-extrabold text-teal-800 dark:text-teal-300 tracking-tight">Yoga Journal</h1>
             <p className="mt-2 text-lg text-stone-600 dark:text-slate-400">나만의 수련과 성장을 위한 공간</p>
@@ -305,28 +319,38 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            <Routes>
-              <Route path="/" element={
-                <>
-                  <div className="mb-8">
-                    <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
-                  </div>
-                  <CardStack 
-                      entries={filteredEntries} 
-                      onEditEntry={handleStartEdit} 
-                      onDeleteEntry={handleDeleteEntry}
-                      onGenerateSouvenir={handleGenerateSouvenir} 
-                      onToggleFavorite={handleToggleFavorite} 
-                      isSelectionMode={isSelectionMode}
-                      selectedEntries={selectedEntries}
-                      onToggleSelection={handleToggleSelection}
-                  />
-                </>
-              } />
-              <Route path="/library" element={<PoseBookshelf entries={entries} />} />
-              <Route path="/analytics" element={<AnalyticsView entries={entries} />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={
+                  <PageWrapper>
+                    <div className="mb-8">
+                      <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+                    </div>
+                    <CardStack
+                        entries={filteredEntries}
+                        onEditEntry={handleStartEdit}
+                        onDeleteEntry={handleDeleteEntry}
+                        onGenerateSouvenir={handleGenerateSouvenir}
+                        onToggleFavorite={handleToggleFavorite}
+                        isSelectionMode={isSelectionMode}
+                        selectedEntries={selectedEntries}
+                        onToggleSelection={handleToggleSelection}
+                    />
+                  </PageWrapper>
+                } />
+                <Route path="/library" element={
+                  <PageWrapper>
+                    <PoseBookshelf entries={entries} />
+                  </PageWrapper>
+                } />
+                <Route path="/analytics" element={
+                  <PageWrapper>
+                    <AnalyticsView entries={entries} />
+                  </PageWrapper>
+                } />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </AnimatePresence>
           </main>
 
           <footer className="text-center py-6 text-sm text-stone-500 dark:text-slate-500">

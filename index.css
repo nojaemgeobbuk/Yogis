@@ -1,17 +1,678 @@
 @import "tailwindcss";
 
+/* ============================================
+   YOgis - Zen Design System
+   Tailwind CSS 4 + OKLCH Color Stack
+   ============================================ */
+
+/* ============================================
+   OKLCH Color Palette Definition
+   - L: Lightness (0-1)
+   - C: Chroma (saturation, 0-0.4)
+   - H: Hue angle (0-360)
+   ============================================ */
+
 @theme {
+  /* === Typography === */
   --font-sans: 'Inter', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Noto Serif KR', Georgia, serif;
+
+  /* === Zen Color Palette (OKLCH) === */
+
+  /* Stone - Warm neutrals for backgrounds */
+  --color-zen-stone-50: oklch(0.985 0.002 75);
+  --color-zen-stone-100: oklch(0.965 0.004 75);
+  --color-zen-stone-200: oklch(0.925 0.006 75);
+  --color-zen-stone-300: oklch(0.865 0.008 75);
+  --color-zen-stone-400: oklch(0.705 0.012 75);
+  --color-zen-stone-500: oklch(0.555 0.014 75);
+  --color-zen-stone-600: oklch(0.445 0.014 75);
+  --color-zen-stone-700: oklch(0.365 0.012 75);
+  --color-zen-stone-800: oklch(0.295 0.010 75);
+  --color-zen-stone-900: oklch(0.235 0.008 75);
+  --color-zen-stone-950: oklch(0.165 0.006 75);
+
+  /* Sage - Primary green for yoga/zen feel */
+  --color-zen-sage-50: oklch(0.975 0.015 145);
+  --color-zen-sage-100: oklch(0.945 0.025 145);
+  --color-zen-sage-200: oklch(0.895 0.040 145);
+  --color-zen-sage-300: oklch(0.825 0.055 145);
+  --color-zen-sage-400: oklch(0.725 0.070 145);
+  --color-zen-sage-500: oklch(0.625 0.080 145);
+  --color-zen-sage-600: oklch(0.525 0.075 145);
+  --color-zen-sage-700: oklch(0.435 0.065 145);
+  --color-zen-sage-800: oklch(0.355 0.050 145);
+  --color-zen-sage-900: oklch(0.295 0.040 145);
+  --color-zen-sage-950: oklch(0.195 0.025 145);
+
+  /* Bamboo - Warm accent for highlights */
+  --color-zen-bamboo-50: oklch(0.980 0.020 95);
+  --color-zen-bamboo-100: oklch(0.955 0.035 95);
+  --color-zen-bamboo-200: oklch(0.915 0.055 95);
+  --color-zen-bamboo-300: oklch(0.855 0.075 95);
+  --color-zen-bamboo-400: oklch(0.775 0.095 95);
+  --color-zen-bamboo-500: oklch(0.695 0.105 95);
+  --color-zen-bamboo-600: oklch(0.595 0.100 95);
+  --color-zen-bamboo-700: oklch(0.495 0.085 95);
+  --color-zen-bamboo-800: oklch(0.415 0.070 95);
+  --color-zen-bamboo-900: oklch(0.355 0.055 95);
+  --color-zen-bamboo-950: oklch(0.255 0.035 95);
+
+  /* Lotus - Soft pink for special accents */
+  --color-zen-lotus-50: oklch(0.980 0.015 350);
+  --color-zen-lotus-100: oklch(0.955 0.030 350);
+  --color-zen-lotus-200: oklch(0.915 0.050 350);
+  --color-zen-lotus-300: oklch(0.855 0.070 350);
+  --color-zen-lotus-400: oklch(0.775 0.090 350);
+  --color-zen-lotus-500: oklch(0.685 0.100 350);
+  --color-zen-lotus-600: oklch(0.585 0.095 350);
+  --color-zen-lotus-700: oklch(0.485 0.080 350);
+  --color-zen-lotus-800: oklch(0.405 0.065 350);
+  --color-zen-lotus-900: oklch(0.345 0.050 350);
+  --color-zen-lotus-950: oklch(0.245 0.030 350);
+
+  /* Water - Calm blue for info/links */
+  --color-zen-water-50: oklch(0.975 0.015 235);
+  --color-zen-water-100: oklch(0.945 0.030 235);
+  --color-zen-water-200: oklch(0.895 0.050 235);
+  --color-zen-water-300: oklch(0.825 0.070 235);
+  --color-zen-water-400: oklch(0.725 0.090 235);
+  --color-zen-water-500: oklch(0.615 0.100 235);
+  --color-zen-water-600: oklch(0.515 0.095 235);
+  --color-zen-water-700: oklch(0.425 0.080 235);
+  --color-zen-water-800: oklch(0.355 0.065 235);
+  --color-zen-water-900: oklch(0.305 0.050 235);
+  --color-zen-water-950: oklch(0.215 0.035 235);
+
+  /* === Semantic Colors === */
+  --color-zen-success: oklch(0.65 0.15 145);
+  --color-zen-warning: oklch(0.75 0.12 85);
+  --color-zen-error: oklch(0.60 0.15 25);
+  --color-zen-info: oklch(0.65 0.10 235);
+
+  /* === Spacing Scale === */
+  --spacing-zen-xs: 0.25rem;
+  --spacing-zen-sm: 0.5rem;
+  --spacing-zen-md: 1rem;
+  --spacing-zen-lg: 1.5rem;
+  --spacing-zen-xl: 2rem;
+  --spacing-zen-2xl: 3rem;
+  --spacing-zen-3xl: 4rem;
+
+  /* === Border Radius === */
+  --radius-zen-sm: 0.375rem;
+  --radius-zen-md: 0.625rem;
+  --radius-zen-lg: 1rem;
+  --radius-zen-xl: 1.5rem;
+  --radius-zen-full: 9999px;
+
+  /* === Shadows (soft, diffused) === */
+  --shadow-zen-sm: 0 1px 3px oklch(0.25 0.01 75 / 0.04), 0 1px 2px oklch(0.25 0.01 75 / 0.06);
+  --shadow-zen-md: 0 4px 6px oklch(0.25 0.01 75 / 0.05), 0 2px 4px oklch(0.25 0.01 75 / 0.06);
+  --shadow-zen-lg: 0 10px 15px oklch(0.25 0.01 75 / 0.05), 0 4px 6px oklch(0.25 0.01 75 / 0.05);
+  --shadow-zen-xl: 0 20px 25px oklch(0.25 0.01 75 / 0.06), 0 8px 10px oklch(0.25 0.01 75 / 0.04);
+  --shadow-zen-glow: 0 0 20px oklch(0.625 0.08 145 / 0.15);
+
+  /* === Transitions === */
+  --transition-zen-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-zen-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-zen-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-zen-breath: 600ms cubic-bezier(0.45, 0, 0.55, 1);
 }
 
-/* 커스텀 스타일 */
+/* ============================================
+   CSS Custom Properties for Theme Switching
+   ============================================ */
+
+:root {
+  /* Light Mode (Default) - Warm, calming tones */
+  --zen-bg-primary: oklch(0.985 0.002 75);
+  --zen-bg-secondary: oklch(0.965 0.004 75);
+  --zen-bg-tertiary: oklch(0.945 0.006 75);
+  --zen-bg-elevated: oklch(0.995 0.001 75);
+
+  --zen-text-primary: oklch(0.235 0.008 75);
+  --zen-text-secondary: oklch(0.445 0.014 75);
+  --zen-text-tertiary: oklch(0.555 0.014 75);
+  --zen-text-muted: oklch(0.655 0.012 75);
+
+  --zen-border-subtle: oklch(0.905 0.006 75 / 0.6);
+  --zen-border-default: oklch(0.865 0.008 75 / 0.8);
+  --zen-border-strong: oklch(0.705 0.012 75 / 0.9);
+
+  --zen-accent-primary: oklch(0.625 0.080 145);
+  --zen-accent-secondary: oklch(0.695 0.105 95);
+  --zen-accent-tertiary: oklch(0.685 0.100 350);
+
+  /* Glassmorphism */
+  --zen-glass-bg: oklch(0.995 0.001 75 / 0.7);
+  --zen-glass-bg-strong: oklch(0.985 0.002 75 / 0.85);
+  --zen-glass-border: oklch(0.925 0.006 75 / 0.5);
+  --zen-glass-shadow: oklch(0.25 0.01 75 / 0.08);
+}
+
+.dark {
+  /* Dark Mode - Deep, restful tones */
+  --zen-bg-primary: oklch(0.165 0.008 75);
+  --zen-bg-secondary: oklch(0.195 0.010 75);
+  --zen-bg-tertiary: oklch(0.225 0.012 75);
+  --zen-bg-elevated: oklch(0.235 0.014 75);
+
+  --zen-text-primary: oklch(0.945 0.004 75);
+  --zen-text-secondary: oklch(0.825 0.008 75);
+  --zen-text-tertiary: oklch(0.705 0.012 75);
+  --zen-text-muted: oklch(0.555 0.014 75);
+
+  --zen-border-subtle: oklch(0.295 0.012 75 / 0.4);
+  --zen-border-default: oklch(0.335 0.014 75 / 0.6);
+  --zen-border-strong: oklch(0.405 0.016 75 / 0.8);
+
+  --zen-accent-primary: oklch(0.725 0.070 145);
+  --zen-accent-secondary: oklch(0.775 0.095 95);
+  --zen-accent-tertiary: oklch(0.775 0.090 350);
+
+  /* Glassmorphism Dark */
+  --zen-glass-bg: oklch(0.195 0.010 75 / 0.6);
+  --zen-glass-bg-strong: oklch(0.215 0.012 75 / 0.8);
+  --zen-glass-border: oklch(0.335 0.014 75 / 0.3);
+  --zen-glass-shadow: oklch(0.05 0.005 75 / 0.4);
+}
+
+/* ============================================
+   Base Layer Styles
+   ============================================ */
+
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    @apply min-h-screen bg-stone-100 text-stone-800 antialiased;
+    min-height: 100vh;
+    background-color: var(--zen-bg-primary);
+    color: var(--zen-text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    transition: background-color var(--transition-zen-slow), color var(--transition-zen-slow);
+  }
+
+  /* Subtle selection highlight */
+  ::selection {
+    background-color: oklch(0.625 0.08 145 / 0.2);
+    color: var(--zen-text-primary);
+  }
+
+  .dark ::selection {
+    background-color: oklch(0.725 0.07 145 / 0.3);
+  }
+
+  /* Focus styles - accessible but subtle */
+  :focus-visible {
+    outline: 2px solid var(--zen-accent-primary);
+    outline-offset: 2px;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--zen-bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--zen-border-default);
+    border-radius: var(--radius-zen-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--zen-border-strong);
   }
 }
 
-/* 애니메이션 정의 */
+/* ============================================
+   Glassmorphism Utilities
+   ============================================ */
+
+@layer utilities {
+  /* Glass Card - Primary */
+  .glass {
+    background: var(--zen-glass-bg);
+    backdrop-filter: blur(12px) saturate(1.5);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    border: 1px solid var(--zen-glass-border);
+    box-shadow:
+      0 4px 24px var(--zen-glass-shadow),
+      inset 0 1px 0 oklch(1 0 0 / 0.05);
+  }
+
+  /* Glass Card - Stronger blur */
+  .glass-strong {
+    background: var(--zen-glass-bg-strong);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border: 1px solid var(--zen-glass-border);
+    box-shadow:
+      0 8px 32px var(--zen-glass-shadow),
+      inset 0 1px 0 oklch(1 0 0 / 0.08);
+  }
+
+  /* Glass Card - Light variant */
+  .glass-light {
+    background: oklch(1 0 0 / 0.4);
+    backdrop-filter: blur(8px) saturate(1.2);
+    -webkit-backdrop-filter: blur(8px) saturate(1.2);
+    border: 1px solid oklch(1 0 0 / 0.2);
+  }
+
+  .dark .glass-light {
+    background: oklch(0.3 0.01 75 / 0.3);
+    border: 1px solid oklch(0.5 0.01 75 / 0.15);
+  }
+
+  /* Glass Panel - For larger surfaces */
+  .glass-panel {
+    background: var(--zen-glass-bg);
+    backdrop-filter: blur(16px) saturate(1.6);
+    -webkit-backdrop-filter: blur(16px) saturate(1.6);
+    border: 1px solid var(--zen-glass-border);
+    box-shadow:
+      0 1px 3px var(--zen-glass-shadow),
+      inset 0 0 0 1px oklch(1 0 0 / 0.03);
+  }
+
+  /* Frosted Glass - Maximum blur effect */
+  .glass-frosted {
+    background: oklch(0.98 0.002 75 / 0.6);
+    backdrop-filter: blur(40px) saturate(2);
+    -webkit-backdrop-filter: blur(40px) saturate(2);
+    border: 1px solid oklch(1 0 0 / 0.3);
+  }
+
+  .dark .glass-frosted {
+    background: oklch(0.18 0.01 75 / 0.5);
+    border: 1px solid oklch(0.4 0.01 75 / 0.2);
+  }
+}
+
+/* ============================================
+   Subtle Border Utilities
+   ============================================ */
+
+@layer utilities {
+  /* Subtle borders - barely visible */
+  .border-zen-subtle {
+    border-color: var(--zen-border-subtle);
+  }
+
+  .border-zen-default {
+    border-color: var(--zen-border-default);
+  }
+
+  .border-zen-strong {
+    border-color: var(--zen-border-strong);
+  }
+
+  /* Gradient borders - ethereal effect */
+  .border-gradient-zen {
+    position: relative;
+    border: none;
+    background: var(--zen-bg-elevated);
+    border-radius: inherit;
+  }
+
+  .border-gradient-zen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      oklch(0.625 0.08 145 / 0.3),
+      oklch(0.695 0.105 95 / 0.2),
+      oklch(0.685 0.10 350 / 0.15)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Divider lines */
+  .divider-zen {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--zen-border-default) 20%,
+      var(--zen-border-default) 80%,
+      transparent
+    );
+  }
+
+  .divider-zen-vertical {
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      var(--zen-border-default) 20%,
+      var(--zen-border-default) 80%,
+      transparent
+    );
+  }
+}
+
+/* ============================================
+   Zen Component Styles
+   ============================================ */
+
+@layer components {
+  /* Zen Card */
+  .zen-card {
+    background: var(--zen-bg-elevated);
+    border: 1px solid var(--zen-border-subtle);
+    border-radius: var(--radius-zen-lg);
+    box-shadow: var(--shadow-zen-sm);
+    transition:
+      transform var(--transition-zen-normal),
+      box-shadow var(--transition-zen-normal),
+      border-color var(--transition-zen-normal);
+  }
+
+  .zen-card:hover {
+    border-color: var(--zen-border-default);
+    box-shadow: var(--shadow-zen-md);
+    transform: translateY(-2px);
+  }
+
+  /* Zen Glass Card */
+  .zen-glass-card {
+    background: var(--zen-glass-bg);
+    backdrop-filter: blur(12px) saturate(1.5);
+    -webkit-backdrop-filter: blur(12px) saturate(1.5);
+    border: 1px solid var(--zen-glass-border);
+    border-radius: var(--radius-zen-lg);
+    box-shadow:
+      0 4px 24px var(--zen-glass-shadow),
+      inset 0 1px 0 oklch(1 0 0 / 0.05);
+    transition:
+      transform var(--transition-zen-normal),
+      box-shadow var(--transition-zen-normal);
+  }
+
+  .zen-glass-card:hover {
+    box-shadow:
+      0 8px 32px var(--zen-glass-shadow),
+      inset 0 1px 0 oklch(1 0 0 / 0.08);
+    transform: translateY(-2px);
+  }
+
+  /* Zen Button - Primary */
+  .zen-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    border-radius: var(--radius-zen-md);
+    transition: all var(--transition-zen-fast);
+    cursor: pointer;
+  }
+
+  .zen-btn-primary {
+    background: var(--zen-accent-primary);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px oklch(0.625 0.08 145 / 0.25);
+  }
+
+  .zen-btn-primary:hover {
+    background: oklch(0.575 0.085 145);
+    box-shadow: 0 4px 12px oklch(0.625 0.08 145 / 0.35);
+    transform: translateY(-1px);
+  }
+
+  .zen-btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px oklch(0.625 0.08 145 / 0.2);
+  }
+
+  /* Zen Button - Secondary (Glass) */
+  .zen-btn-secondary {
+    background: var(--zen-glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--zen-text-primary);
+    border: 1px solid var(--zen-border-default);
+  }
+
+  .zen-btn-secondary:hover {
+    background: var(--zen-glass-bg-strong);
+    border-color: var(--zen-accent-primary);
+    color: var(--zen-accent-primary);
+  }
+
+  /* Zen Button - Ghost */
+  .zen-btn-ghost {
+    background: transparent;
+    color: var(--zen-text-secondary);
+    border: none;
+  }
+
+  .zen-btn-ghost:hover {
+    background: var(--zen-bg-tertiary);
+    color: var(--zen-text-primary);
+  }
+
+  /* Zen Input */
+  .zen-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--zen-bg-elevated);
+    border: 1px solid var(--zen-border-subtle);
+    border-radius: var(--radius-zen-md);
+    color: var(--zen-text-primary);
+    transition: all var(--transition-zen-fast);
+  }
+
+  .zen-input::placeholder {
+    color: var(--zen-text-muted);
+  }
+
+  .zen-input:focus {
+    outline: none;
+    border-color: var(--zen-accent-primary);
+    box-shadow: 0 0 0 3px oklch(0.625 0.08 145 / 0.1);
+  }
+
+  /* Zen Glass Input */
+  .zen-glass-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--zen-glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--zen-glass-border);
+    border-radius: var(--radius-zen-md);
+    color: var(--zen-text-primary);
+    transition: all var(--transition-zen-fast);
+  }
+
+  .zen-glass-input:focus {
+    outline: none;
+    border-color: var(--zen-accent-primary);
+    background: var(--zen-glass-bg-strong);
+    box-shadow: 0 0 0 3px oklch(0.625 0.08 145 / 0.15);
+  }
+
+  /* Zen Badge */
+  .zen-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-zen-full);
+    background: var(--zen-bg-tertiary);
+    color: var(--zen-text-secondary);
+    border: 1px solid var(--zen-border-subtle);
+  }
+
+  .zen-badge-sage {
+    background: oklch(0.945 0.025 145 / 0.5);
+    color: oklch(0.435 0.065 145);
+    border-color: oklch(0.825 0.055 145 / 0.3);
+  }
+
+  .dark .zen-badge-sage {
+    background: oklch(0.295 0.040 145 / 0.4);
+    color: oklch(0.825 0.055 145);
+  }
+
+  .zen-badge-bamboo {
+    background: oklch(0.955 0.035 95 / 0.5);
+    color: oklch(0.495 0.085 95);
+    border-color: oklch(0.855 0.075 95 / 0.3);
+  }
+
+  .dark .zen-badge-bamboo {
+    background: oklch(0.355 0.055 95 / 0.4);
+    color: oklch(0.855 0.075 95);
+  }
+
+  .zen-badge-lotus {
+    background: oklch(0.955 0.030 350 / 0.5);
+    color: oklch(0.485 0.080 350);
+    border-color: oklch(0.855 0.070 350 / 0.3);
+  }
+
+  .dark .zen-badge-lotus {
+    background: oklch(0.345 0.050 350 / 0.4);
+    color: oklch(0.855 0.070 350);
+  }
+
+  /* Zen Navigation */
+  .zen-nav {
+    background: var(--zen-glass-bg-strong);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border-bottom: 1px solid var(--zen-glass-border);
+  }
+
+  .zen-nav-item {
+    padding: 0.5rem 1rem;
+    color: var(--zen-text-secondary);
+    border-radius: var(--radius-zen-md);
+    transition: all var(--transition-zen-fast);
+  }
+
+  .zen-nav-item:hover {
+    background: var(--zen-bg-tertiary);
+    color: var(--zen-text-primary);
+  }
+
+  .zen-nav-item.active {
+    background: oklch(0.625 0.08 145 / 0.1);
+    color: var(--zen-accent-primary);
+  }
+
+  /* Zen Tooltip */
+  .zen-tooltip {
+    background: var(--zen-glass-bg-strong);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--zen-glass-border);
+    border-radius: var(--radius-zen-sm);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--zen-text-primary);
+    box-shadow: var(--shadow-zen-lg);
+  }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes zen-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zen-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zen-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zen-breath {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes zen-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes zen-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes subtle-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 @keyframes walk-across {
   0% { transform: translateX(10px) scaleX(1); }
   48% { transform: translateX(calc(100vw - 160px)) scaleX(1); }
@@ -25,23 +686,301 @@
   100% { transform: scale(1.5) rotate(90deg); opacity: 0; }
 }
 
-@keyframes subtle-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 @keyframes bounce-in {
   0% { opacity: 0; transform: scale(0.3); }
   50% { opacity: 1; transform: scale(1.1); }
   100% { transform: scale(1); }
 }
 
-.animate-bounce-in {
-  animation: bounce-in 0.5s ease-out;
+/* Animation utility classes */
+@layer utilities {
+  .animate-zen-fade-in {
+    animation: zen-fade-in 0.3s ease-out;
+  }
+
+  .animate-zen-scale-in {
+    animation: zen-scale-in 0.25s ease-out;
+  }
+
+  .animate-zen-slide-up {
+    animation: zen-slide-up 0.4s ease-out;
+  }
+
+  .animate-zen-breath {
+    animation: zen-breath 4s ease-in-out infinite;
+  }
+
+  .animate-zen-float {
+    animation: zen-float 3s ease-in-out infinite;
+  }
+
+  .animate-zen-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--zen-bg-secondary) 0%,
+      var(--zen-bg-tertiary) 50%,
+      var(--zen-bg-secondary) 100%
+    );
+    background-size: 200% 100%;
+    animation: zen-shimmer 1.5s infinite;
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.5s ease-out;
+  }
+
+  .animated-gradient-bg {
+    background-size: 200% 200%;
+    animation: subtle-gradient 15s ease infinite;
+  }
 }
 
-.animated-gradient-bg {
-  background-size: 200% 200%;
-  animation: subtle-gradient 15s ease infinite;
+/* ============================================
+   Dark Mode Specific Adjustments
+   ============================================ */
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Ensure smooth transitions between modes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0ms;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition-duration: 200ms;
+  }
+}
+
+/* ============================================
+   Accessibility
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --zen-border-subtle: oklch(0.705 0.012 75);
+    --zen-border-default: oklch(0.555 0.014 75);
+  }
+
+  .dark {
+    --zen-border-subtle: oklch(0.555 0.014 75);
+    --zen-border-default: oklch(0.705 0.012 75);
+  }
+}
+
+/* ============================================
+   Form Input Glow Effects
+   ============================================ */
+
+@layer components {
+  /* Zen Input with Glow */
+  .zen-input-glow {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-300;
+    @apply bg-white/80 dark:bg-slate-900/80;
+    @apply border border-stone-200 dark:border-slate-700;
+    @apply text-stone-800 dark:text-slate-200;
+    @apply placeholder:text-stone-400 dark:placeholder:text-slate-500;
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  .zen-input-glow:hover {
+    @apply border-stone-300 dark:border-slate-600;
+    box-shadow: 0 0 0 3px oklch(0.625 0.08 145 / 0.05);
+  }
+
+  .zen-input-glow:focus {
+    @apply outline-none border-teal-400 dark:border-teal-500;
+    box-shadow:
+      0 0 0 3px oklch(0.625 0.08 145 / 0.15),
+      0 0 20px oklch(0.625 0.08 145 / 0.1),
+      0 0 40px oklch(0.625 0.08 145 / 0.05);
+  }
+
+  /* Textarea variant */
+  .zen-textarea-glow {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-300 resize-none;
+    @apply bg-white/80 dark:bg-slate-900/80;
+    @apply border border-stone-200 dark:border-slate-700;
+    @apply text-stone-800 dark:text-slate-200;
+    @apply placeholder:text-stone-400 dark:placeholder:text-slate-500;
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  .zen-textarea-glow:hover {
+    @apply border-stone-300 dark:border-slate-600;
+    box-shadow: 0 0 0 3px oklch(0.625 0.08 145 / 0.05);
+  }
+
+  .zen-textarea-glow:focus {
+    @apply outline-none border-teal-400 dark:border-teal-500;
+    box-shadow:
+      0 0 0 3px oklch(0.625 0.08 145 / 0.15),
+      0 0 20px oklch(0.625 0.08 145 / 0.1),
+      0 0 40px oklch(0.625 0.08 145 / 0.05);
+  }
+
+  /* Rich text editor wrapper with glow */
+  .zen-editor-glow {
+    @apply rounded-xl overflow-hidden transition-all duration-300;
+    @apply bg-white/80 dark:bg-slate-900/80;
+    @apply border border-stone-200 dark:border-slate-700;
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  .zen-editor-glow:hover {
+    @apply border-stone-300 dark:border-slate-600;
+    box-shadow: 0 0 0 3px oklch(0.625 0.08 145 / 0.05);
+  }
+
+  .zen-editor-glow:focus-within {
+    @apply border-teal-400 dark:border-teal-500;
+    box-shadow:
+      0 0 0 3px oklch(0.625 0.08 145 / 0.15),
+      0 0 20px oklch(0.625 0.08 145 / 0.1),
+      0 0 40px oklch(0.625 0.08 145 / 0.05);
+  }
+
+  /* Glow button */
+  .zen-btn-glow {
+    @apply relative overflow-hidden;
+    @apply px-6 py-3 rounded-xl font-semibold;
+    @apply bg-gradient-to-r from-teal-500 to-teal-600;
+    @apply text-white shadow-lg;
+    @apply transition-all duration-300;
+    box-shadow:
+      0 4px 15px oklch(0.625 0.08 145 / 0.3),
+      0 0 0 0 transparent;
+  }
+
+  .zen-btn-glow:hover {
+    @apply from-teal-400 to-teal-500;
+    transform: translateY(-2px);
+    box-shadow:
+      0 6px 20px oklch(0.625 0.08 145 / 0.4),
+      0 0 30px oklch(0.625 0.08 145 / 0.2);
+  }
+
+  .zen-btn-glow:active {
+    transform: translateY(0);
+    box-shadow:
+      0 2px 10px oklch(0.625 0.08 145 / 0.3),
+      0 0 15px oklch(0.625 0.08 145 / 0.15);
+  }
+
+  .zen-btn-glow:disabled {
+    @apply opacity-60 cursor-not-allowed;
+    transform: none;
+    box-shadow: 0 4px 15px oklch(0.625 0.08 145 / 0.2);
+  }
+
+  /* Photo upload zone with glow */
+  .zen-upload-glow {
+    @apply relative flex flex-col items-center justify-center;
+    @apply w-32 h-32 rounded-xl cursor-pointer;
+    @apply border-2 border-dashed border-stone-300 dark:border-slate-600;
+    @apply bg-stone-50/50 dark:bg-slate-800/50;
+    @apply transition-all duration-300;
+  }
+
+  .zen-upload-glow:hover {
+    @apply border-teal-400 dark:border-teal-500;
+    @apply bg-teal-50/50 dark:bg-teal-900/20;
+    box-shadow:
+      0 0 0 3px oklch(0.625 0.08 145 / 0.1),
+      0 0 20px oklch(0.625 0.08 145 / 0.08);
+  }
+
+  /* Form card container */
+  .zen-form-card {
+    @apply relative overflow-hidden;
+    @apply p-8 rounded-2xl;
+    @apply bg-white/70 dark:bg-slate-800/70;
+    @apply backdrop-blur-xl;
+    @apply border border-stone-200/50 dark:border-slate-700/50;
+    @apply shadow-xl;
+  }
+
+  .zen-form-card::before {
+    content: '';
+    @apply absolute inset-0 -z-10;
+    @apply bg-gradient-to-br from-teal-500/5 via-transparent to-amber-500/5;
+  }
+}
+
+/* Quill Editor Customization for Glow Theme */
+.zen-editor-glow .ql-toolbar {
+  @apply border-0 border-b border-stone-200 dark:border-slate-700;
+  @apply bg-stone-50/50 dark:bg-slate-800/50;
+}
+
+.zen-editor-glow .ql-container {
+  @apply border-0;
+  @apply bg-transparent;
+  font-family: inherit;
+}
+
+.zen-editor-glow .ql-editor {
+  @apply min-h-[120px] text-stone-800 dark:text-slate-200;
+  @apply px-4 py-3;
+}
+
+.zen-editor-glow .ql-editor.ql-blank::before {
+  @apply text-stone-400 dark:text-slate-500 italic;
+  left: 1rem;
+}
+
+.zen-editor-glow .ql-toolbar .ql-stroke {
+  stroke: oklch(0.45 0.01 75);
+}
+
+.zen-editor-glow .ql-toolbar .ql-fill {
+  fill: oklch(0.45 0.01 75);
+}
+
+.zen-editor-glow .ql-toolbar button:hover .ql-stroke {
+  stroke: oklch(0.625 0.08 145);
+}
+
+.zen-editor-glow .ql-toolbar button:hover .ql-fill {
+  fill: oklch(0.625 0.08 145);
+}
+
+.zen-editor-glow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: oklch(0.625 0.08 145);
+}
+
+.zen-editor-glow .ql-toolbar button.ql-active .ql-fill {
+  fill: oklch(0.625 0.08 145);
+}
+
+.dark .zen-editor-glow .ql-toolbar .ql-stroke {
+  stroke: oklch(0.65 0.01 75);
+}
+
+.dark .zen-editor-glow .ql-toolbar .ql-fill {
+  fill: oklch(0.65 0.01 75);
+}
+
+.dark .zen-editor-glow .ql-toolbar button:hover .ql-stroke,
+.dark .zen-editor-glow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: oklch(0.725 0.07 145);
+}
+
+.dark .zen-editor-glow .ql-toolbar button:hover .ql-fill,
+.dark .zen-editor-glow .ql-toolbar button.ql-active .ql-fill {
+  fill: oklch(0.725 0.07 145);
 }
