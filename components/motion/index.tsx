@@ -1,116 +1,131 @@
-import { motion, HTMLMotionProps, Variants, AnimatePresence } from 'framer-motion';
 import React from 'react';
+import { View, Text, Pressable, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { MotiView, MotiText, MotiImage, AnimatePresence } from 'moti';
+import { MotiPressable } from 'moti/interactions';
 
 // ============================================
-// Animation Variants - Zen Style
+// Animation Transition Configs for Moti
 // ============================================
 
-// Page transition variants
-export const pageVariants: Variants = {
-  initial: {
+// Standard easing transition
+export const standardTransition = {
+  type: 'timing' as const,
+  duration: 350,
+};
+
+// Spring transition
+export const springTransition = {
+  type: 'spring' as const,
+  stiffness: 400,
+  damping: 25,
+};
+
+// Soft spring transition
+export const softSpringTransition = {
+  type: 'spring' as const,
+  stiffness: 300,
+  damping: 30,
+};
+
+// Quick spring transition
+export const quickSpringTransition = {
+  type: 'spring' as const,
+  stiffness: 500,
+  damping: 25,
+};
+
+// ============================================
+// Animation State Presets
+// ============================================
+
+// Page transition states
+export const pageAnimationStates = {
+  from: {
     opacity: 0,
-    y: 20,
+    scale: 0.98,
   },
-  enter: {
+  animate: {
     opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuad
-    },
+    scale: 1,
   },
   exit: {
     opacity: 0,
-    y: -10,
-    transition: {
-      duration: 0.3,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
+    scale: 1.02,
   },
 };
 
-// Stagger container variants
-export const staggerContainerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-// Stagger item variants (slide up)
-export const staggerItemVariants: Variants = {
-  hidden: {
+// Fade in states
+export const fadeInStates = {
+  from: {
     opacity: 0,
-    y: 30,
-    scale: 0.95,
   },
-  visible: {
+  animate: {
     opacity: 1,
-    y: 0,
+  },
+};
+
+// Slide up states
+export const slideUpStates = {
+  from: {
+    opacity: 0,
+    translateY: 30,
+  },
+  animate: {
+    opacity: 1,
+    translateY: 0,
+  },
+};
+
+// Pop states (for buttons, cards)
+export const popStates = {
+  from: {
+    opacity: 0,
+    scale: 0.8,
+    translateY: 20,
+  },
+  animate: {
+    opacity: 1,
     scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
+    translateY: 0,
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.9,
   },
 };
 
-// Fade in variants
-export const fadeInVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
+// Bubble states
+export const bubbleStates = {
+  from: {
+    opacity: 0,
+    scale: 0.5,
+    rotate: '-10deg',
+  },
+  animate: {
     opacity: 1,
-    transition: { duration: 0.4, ease: 'easeOut' },
+    scale: 1,
+    rotate: '0deg',
   },
 };
 
-// Scale up variants (for cards/buttons)
-export const scaleVariants: Variants = {
-  initial: { scale: 1 },
-  hover: {
-    scale: 1.02,
-    transition: { duration: 0.2, ease: 'easeOut' },
-  },
-  tap: {
+// Card hover/press states
+export const cardPressStates = {
+  pressed: {
     scale: 0.98,
-    transition: { duration: 0.1 },
   },
-};
-
-// Button variants with subtle scale
-export const buttonVariants: Variants = {
-  initial: { scale: 1 },
-  hover: {
-    scale: 1.05,
-    transition: { duration: 0.2, ease: 'easeOut' },
-  },
-  tap: {
-    scale: 0.95,
-    transition: { duration: 0.1 },
-  },
-};
-
-// Card hover variants
-export const cardHoverVariants: Variants = {
-  initial: {
-    scale: 1,
-    y: 0,
-  },
-  hover: {
+  hovered: {
     scale: 1.02,
-    y: -4,
-    transition: {
-      duration: 0.3,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
+    translateY: -4,
   },
-  tap: {
-    scale: 0.99,
-    transition: { duration: 0.1 },
+};
+
+// Button press states
+export const buttonPressStates = {
+  pressed: {
+    scale: 0.95,
+  },
+  hovered: {
+    scale: 1.05,
   },
 };
 
@@ -119,108 +134,231 @@ export const cardHoverVariants: Variants = {
 // ============================================
 
 // Animated Page Wrapper
-interface PageWrapperProps extends HTMLMotionProps<'div'> {
+interface PageWrapperProps {
   children: React.ReactNode;
+  style?: ViewStyle;
+  delay?: number;
 }
 
-export const PageWrapper: React.FC<PageWrapperProps> = ({ children, ...props }) => (
-  <motion.div
-    initial="initial"
-    animate="enter"
-    exit="exit"
-    variants={pageVariants}
-    {...props}
+export const PageWrapper: React.FC<PageWrapperProps> = ({ children, style, delay = 0 }) => (
+  <MotiView
+    from={pageAnimationStates.from}
+    animate={pageAnimationStates.animate}
+    exit={pageAnimationStates.exit}
+    transition={{ ...standardTransition, delay }}
+    style={style}
   >
     {children}
-  </motion.div>
+  </MotiView>
 );
 
-// Animated Card with hover effect
-interface MotionCardProps extends HTMLMotionProps<'div'> {
+// Animated Card with press effect
+interface MotionCardProps {
   children: React.ReactNode;
-  enableHover?: boolean;
+  style?: ViewStyle;
+  onPress?: () => void;
+  enablePress?: boolean;
 }
 
 export const MotionCard: React.FC<MotionCardProps> = ({
   children,
-  enableHover = true,
-  ...props
-}) => (
-  <motion.div
-    variants={enableHover ? cardHoverVariants : undefined}
-    initial="initial"
-    whileHover={enableHover ? "hover" : undefined}
-    whileTap={enableHover ? "tap" : undefined}
-    {...props}
-  >
-    {children}
-  </motion.div>
-);
+  style,
+  onPress,
+  enablePress = true,
+}) => {
+  if (!enablePress) {
+    return (
+      <MotiView
+        from={slideUpStates.from}
+        animate={slideUpStates.animate}
+        transition={springTransition}
+        style={style}
+      >
+        {children}
+      </MotiView>
+    );
+  }
+
+  return (
+    <MotiPressable
+      onPress={onPress}
+      animate={({ pressed, hovered }) => {
+        'worklet';
+        return {
+          scale: pressed ? 0.98 : hovered ? 1.02 : 1,
+          translateY: pressed ? 0 : hovered ? -4 : 0,
+        };
+      }}
+      transition={springTransition}
+      style={style}
+    >
+      {children}
+    </MotiPressable>
+  );
+};
 
 // Animated Button with scale effect
-interface MotionButtonProps extends HTMLMotionProps<'button'> {
+interface MotionButtonProps {
   children: React.ReactNode;
+  style?: ViewStyle;
+  onPress?: () => void;
+  disabled?: boolean;
 }
 
-export const MotionButton: React.FC<MotionButtonProps> = ({ children, ...props }) => (
-  <motion.button
-    variants={buttonVariants}
-    initial="initial"
-    whileHover="hover"
-    whileTap="tap"
-    {...props}
+export const MotionButton: React.FC<MotionButtonProps> = ({
+  children,
+  style,
+  onPress,
+  disabled = false,
+}) => (
+  <MotiPressable
+    onPress={onPress}
+    disabled={disabled}
+    animate={({ pressed, hovered }) => {
+      'worklet';
+      return {
+        scale: pressed ? 0.95 : hovered ? 1.05 : 1,
+        opacity: disabled ? 0.5 : 1,
+      };
+    }}
+    transition={springTransition}
+    style={style}
   >
     {children}
-  </motion.button>
+  </MotiPressable>
 );
 
-// Stagger Container
-interface StaggerContainerProps extends HTMLMotionProps<'div'> {
+// Stagger Container - wraps children for staggered animations
+interface StaggerContainerProps {
   children: React.ReactNode;
-}
-
-export const StaggerContainer: React.FC<StaggerContainerProps> = ({ children, ...props }) => (
-  <motion.div
-    variants={staggerContainerVariants}
-    initial="hidden"
-    animate="visible"
-    {...props}
-  >
-    {children}
-  </motion.div>
-);
-
-// Stagger Item
-interface StaggerItemProps extends HTMLMotionProps<'div'> {
-  children: React.ReactNode;
-}
-
-export const StaggerItem: React.FC<StaggerItemProps> = ({ children, ...props }) => (
-  <motion.div
-    variants={staggerItemVariants}
-    {...props}
-  >
-    {children}
-  </motion.div>
-);
-
-// Fade In component
-interface FadeInProps extends HTMLMotionProps<'div'> {
-  children: React.ReactNode;
+  style?: ViewStyle;
   delay?: number;
 }
 
-export const FadeIn: React.FC<FadeInProps> = ({ children, delay = 0, ...props }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4, delay, ease: 'easeOut' }}
-    {...props}
+export const StaggerContainer: React.FC<StaggerContainerProps> = ({
+  children,
+  style,
+  delay = 0,
+}) => (
+  <MotiView
+    from={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ ...standardTransition, delay }}
+    style={style}
   >
     {children}
-  </motion.div>
+  </MotiView>
 );
 
-// Re-export framer-motion utilities
-export { motion, AnimatePresence };
-export type { Variants };
+// Stagger Item
+interface StaggerItemProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  index?: number;
+  delay?: number;
+}
+
+export const StaggerItem: React.FC<StaggerItemProps> = ({
+  children,
+  style,
+  index = 0,
+  delay = 0,
+}) => (
+  <MotiView
+    from={slideUpStates.from}
+    animate={slideUpStates.animate}
+    transition={{
+      ...springTransition,
+      delay: delay + index * 80,
+    }}
+    style={style}
+  >
+    {children}
+  </MotiView>
+);
+
+// Fade In component
+interface FadeInProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  delay?: number;
+  duration?: number;
+}
+
+export const FadeIn: React.FC<FadeInProps> = ({
+  children,
+  style,
+  delay = 0,
+  duration = 400,
+}) => (
+  <MotiView
+    from={{ opacity: 0, translateY: 10 }}
+    animate={{ opacity: 1, translateY: 0 }}
+    transition={{
+      type: 'timing',
+      duration,
+      delay,
+    }}
+    style={style}
+  >
+    {children}
+  </MotiView>
+);
+
+// Pop In component (for cards/buttons with spring bounce)
+interface PopInProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  delay?: number;
+}
+
+export const PopIn: React.FC<PopInProps> = ({
+  children,
+  style,
+  delay = 0,
+}) => (
+  <MotiView
+    from={popStates.from}
+    animate={popStates.animate}
+    exit={popStates.exit}
+    transition={{
+      ...springTransition,
+      delay,
+    }}
+    style={style}
+  >
+    {children}
+  </MotiView>
+);
+
+// Slide Up component (for modals/sheets)
+interface SlideUpProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  visible?: boolean;
+}
+
+export const SlideUp: React.FC<SlideUpProps> = ({
+  children,
+  style,
+  visible = true,
+}) => (
+  <AnimatePresence>
+    {visible && (
+      <MotiView
+        from={{ opacity: 0, translateY: 100 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        exit={{ opacity: 0, translateY: 100 }}
+        transition={softSpringTransition}
+        style={style}
+      >
+        {children}
+      </MotiView>
+    )}
+  </AnimatePresence>
+);
+
+// ============================================
+// Re-export moti utilities
+// ============================================
+export { MotiView, MotiText, MotiImage, AnimatePresence, MotiPressable };

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d9488;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Circle background -->
+  <circle cx="50" cy="50" r="48" fill="url(#grad)"/>
+  <!-- Yoga pose silhouette (Tree pose - Vrksasana) -->
+  <g fill="#fff">
+    <!-- Head -->
+    <circle cx="50" cy="25" r="7"/>
+    <!-- Body -->
+    <path d="M50 32 L50 55 Q50 60 50 65" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Arms raised -->
+    <path d="M35 40 Q42 30 50 28 Q58 30 65 40" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Standing leg -->
+    <path d="M50 65 L50 82" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Bent leg -->
+    <path d="M50 55 Q60 50 55 65" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

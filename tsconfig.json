@@ -25,5 +25,13 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "App.native.tsx",
+    "screens",
+    "navigation"
+  ],
+  "extends": "expo/tsconfig.base"
 }

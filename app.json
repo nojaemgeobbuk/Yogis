@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "YOgis",
+    "slug": "yogis",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "yogis-app",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0d9488"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yogis.app"
+    },
+    "android": {
+      "package": "com.yogis.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0d9488"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}

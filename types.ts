@@ -11,13 +11,20 @@ export interface YogaPose {
 
 export type PhotoTheme = '오늘의 자세' | '오늘 하루' | '도반의 추억';
 
+// React Native 호환을 위한 타입 정의
+// 웹: File 객체, React Native: { uri: string, type: string, name: string }
+export type ImageFile = File | {
+  uri: string;
+  type: string;
+  name: string;
+};
+
 export interface PhotoEntry {
-  export interface PhotoEntry {
-    url: string;
-    caption?: string;
-    theme?: PhotoTheme;
-    file?: File; // 👈 [이 줄이 꼭 있어야 합니다!]
-  }
+  url: string;
+  caption?: string;
+  theme?: PhotoTheme;
+  file?: ImageFile; // 웹과 React Native 모두 지원
+}
 
 export interface JournalEntry {
   id: string;
